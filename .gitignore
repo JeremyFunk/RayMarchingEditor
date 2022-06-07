@@ -1,5 +1,4 @@
-*/GUILib/.vs/*
-*/GUILib/bin/Debug
-*/GUILib/bin/Release
-*/GUILib/obj
-GUILib/*
+.vs/
+.debug/
+RayMarchC++/Debug/
+RayMarchC++/x64/
