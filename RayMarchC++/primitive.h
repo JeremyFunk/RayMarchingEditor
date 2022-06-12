@@ -2,15 +2,14 @@
 #define PRIMITIVE_H
 #include "glm/glm.hpp"
 #include <string>
-const int MODIFIER_COUNT = 3;
-
+#include "constants.h"
 namespace Primitive {
 	enum ModifierType {
-		DISTORT = 1, TWIST, BEND, REPETITION, REPETITION_LIMITED, ROUND
+		NONE_MOD, DISTORT, TWIST, BEND, REPETITION, REPETITION_LIMITED, ROUND
 	};
 
 	enum GroupModifierType {
-		UNION = 1, SUBTRACTION = 2, INTERSECTION = 3, SMOOTH_UNION = 4, SMOOTH_SUBTRACTION = 5, SMOOTH_INTERSECTION = 6
+		NONE_GROUP = 0, UNION = 1, SUBTRACTION = 2, INTERSECTION = 3, SMOOTH_UNION = 4, SMOOTH_SUBTRACTION = 5, SMOOTH_INTERSECTION = 6
 	};
 
 	struct Transformation {
@@ -26,11 +25,11 @@ namespace Primitive {
 		float attribute2;
 		float attribute3;
 		float attribute4;
-		int modifier;
+		ModifierType modifier;
 	};
 
 	struct ShaderGroupPrimitive {
-		int modifier;
+		GroupModifierType modifier;
 		int prim0;
 		int prim1;
 		int prim2;
@@ -54,8 +53,8 @@ namespace Primitive {
 	};
 
 	struct ShaderPrimitive {
-		float values[10];
-		Modifier modifiers[MODIFIER_COUNT];
+		float values[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		Modifier modifiers[COUNT_PRIMITIVE_MODIFIER];
 		int mod_count = 0;
 		int prim_type;
 		std::string name;
@@ -66,14 +65,14 @@ namespace Primitive {
 		}
 
 		void remove_modifier(int index) {
-			modifiers[index].modifier = 0;
+			modifiers[index].modifier = ModifierType::NONE_MOD;
 			mod_count -= 1;
-			for (int i = 0; i < MODIFIER_COUNT - 1; i++) {
+			for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER - 1; i++) {
 				if (modifiers[i].modifier == 0) {
-					for (int j = i + 1; j < MODIFIER_COUNT; j++) {
+					for (int j = i + 1; j < COUNT_PRIMITIVE_MODIFIER; j++) {
 						if (modifiers[j].modifier != 0) {
 							modifiers[i] = modifiers[j];
-							modifiers[j].modifier = 0;
+							modifiers[j].modifier = ModifierType::NONE_MOD;
 							break;
 						}
 					}

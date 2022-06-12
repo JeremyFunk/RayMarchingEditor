@@ -15,7 +15,7 @@ namespace Primitive {
 		p.prim1 = p2;
 		p.prim2 = -1;
 		p.prim3 = -1;
-		p.modifier = 2;
+		p.modifier = GroupModifierType::SUBTRACTION;
 
 		return p;
 	}
@@ -25,7 +25,7 @@ namespace Primitive {
 		p.prim1 = p2;
 		p.prim2 = -1;
 		p.prim3 = -1;
-		p.modifier = 1;
+		p.modifier = GroupModifierType::UNION;
 
 		return p;
 	}
@@ -35,7 +35,7 @@ namespace Primitive {
 		p.prim1 = p2;
 		p.prim2 = -1;
 		p.prim3 = -1;
-		p.modifier = 3;
+		p.modifier = GroupModifierType::INTERSECTION;
 
 		return p;
 	}
@@ -47,7 +47,7 @@ namespace Primitive {
 		p.prim2 = -1;
 		p.prim3 = -1;
 		p.primAttribute = factor;
-		p.modifier = 4;
+		p.modifier = GroupModifierType::SMOOTH_UNION;
 
 		return p;
 	}
@@ -59,7 +59,7 @@ namespace Primitive {
 		p.prim2 = -1;
 		p.prim3 = -1;
 		p.primAttribute = factor;
-		p.modifier = 5;
+		p.modifier = GroupModifierType::SMOOTH_SUBTRACTION;
 
 		return p;
 	}
@@ -71,7 +71,7 @@ namespace Primitive {
 		p.prim2 = -1;
 		p.prim3 = -1;
 		p.primAttribute = factor;
-		p.modifier = 6;
+		p.modifier = GroupModifierType::SMOOTH_INTERSECTION;
 
 		return p;
 	}

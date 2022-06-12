@@ -23,11 +23,13 @@ using namespace glm;
 
 #include <glm/gtx/string_cast.hpp>
 #include <iostream>
+#include "RMIO.h"
 #include "primitive.h"
 #include "helpers.h"
 #include "shader.h"
 #include "free_cam.h"
 #include "imgui_handler.h"
+#include "scene.h"
 
 int screen_width = 1280;
 int screen_height = 720;
@@ -113,10 +115,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.ProcessMouseScroll(static_cast<float>(yoffset));
+	if (cam_mode == 1) {
+		camera.ProcessMouseScroll(static_cast<float>(yoffset));
+	}
 }
 int setupWindow() {
-
 	// Initialise GLFW
 	if (!glfwInit())
 	{
@@ -166,9 +169,14 @@ static RMImGui::ImGuiData data;
 
 int main()
 {
+	if (!RMIO::SetupDirectories()) {
+		return -1;
+	}
 	if (setupWindow() == -1) {
 		return -1;
 	}
+
+	
 
 	auto mat = transformationMatrix(glm::vec3(90, 45, 20), glm::vec3(2.0, 3.0, 4.0));
 
@@ -313,6 +321,14 @@ int main()
 	} // Check if the ESC key was pressed or the window was closed
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
 		glfwWindowShouldClose(window) == 0);
+
+	auto original = Scene::toJson(Scene::createScene(data));
+	auto sceneBack = Scene::convertScene(Scene::toScene(original));
+	auto transformed = Scene::toJson(Scene::createScene(sceneBack));
+	std::cout << (original == transformed ? "Same" : "different") << std::endl << std::endl;
+	std::cout << original << std::endl << std::endl;
+	std::cout << transformed << std::endl << std::endl;
+
 
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();

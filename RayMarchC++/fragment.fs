@@ -395,7 +395,7 @@ void main()
     }
 
     if(dist.hitRaw || dist.hit){
-        color += vec3(0.2, 0.0, 0.0);
+        //color += vec3(0.2, 0.0, 0.0);
     }
     
     // Output to screen

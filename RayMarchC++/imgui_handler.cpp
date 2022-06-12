@@ -5,11 +5,13 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "constants.h"
+#include "RMIO.h"
+#include "scene.h"
 namespace RMImGui {
 	void DisplayTransformation(Primitive::ShaderPrimitive* p) {
 		auto transformation = &(*p).transformation;
 		float p3[3] = { (*transformation).position.x, (*transformation).position.y, (*transformation).position.z };
-		auto changed = ImGui::SliderFloat3("Position", p3, -5.0, 5.0, "%.3f", 0);
+		auto changed = ImGui::DragFloat3("Position", p3, 0.01, -100.0, 100.0, "%.3f", 0);
 		if (changed) {
 			(*transformation).position.x = p3[0];
 			(*transformation).position.y = p3[1];
@@ -17,7 +19,7 @@ namespace RMImGui {
 		}
 
 		float r3[3] = { (*transformation).rotation.x, (*transformation).rotation.y, (*transformation).rotation.z };
-		changed = ImGui::SliderFloat3("Rotation", r3, -180.0, 180.0, "%.3f", 0);
+		changed = ImGui::DragFloat3("Rotation", r3, 1.0, -180.0, 180.0, "%.3f", 0);
 		if (changed) {
 			(*transformation).rotation.x = r3[0];
 			(*transformation).rotation.y = r3[1];
@@ -27,7 +29,7 @@ namespace RMImGui {
 		}
 
 		float s3[3] = { (*transformation).scale.x, (*transformation).scale.y, (*transformation).scale.z };
-		changed = ImGui::SliderFloat3("Scale", s3, 0.0, 5.0, "%.3f", 0);
+		changed = ImGui::DragFloat3("Scale", s3, 0.01, -100.0, 100.0, "%.3f", 0);
 		if (changed) {
 			(*transformation).scale.x = s3[0];
 			(*transformation).scale.y = s3[1];
@@ -44,11 +46,11 @@ namespace RMImGui {
 	}
 	void DisplayTorus(Primitive::ShaderPrimitive* torus) {
 		DisplayTransformation(torus);
-		ImGui::SliderFloat("Inner Radius", &(torus->values[1]), 0, 5.0, "%.3f", 0);
+		ImGui::DragFloat("Inner Radius", &(torus->values[1]), 0.01, 0, 5.0, "%.3f", 0);
 	}
 	void DisplayMandelbulb(Primitive::ShaderPrimitive* mandelbulb) {
 		DisplayTransformation(mandelbulb);
-		ImGui::SliderFloat("Power", &(mandelbulb->values[0]), 0, 40.0, "%.3f", 0);
+		ImGui::DragFloat("Power", &(mandelbulb->values[0]), 0.01, 0, 40.0, "%.3f", 0);
 	}
 	void DisplayModifier(Primitive::ShaderPrimitive* element, int index) {
 		auto clicked = ImGui::Button("Delete");
@@ -65,14 +67,14 @@ namespace RMImGui {
 				if (ImGui::TreeNode("Distort Modifier"))
 				{
 					float p3[3] = { (*element).modifiers[index].attribute0, (*element).modifiers[index].attribute1, (*element).modifiers[index].attribute2 };
-					auto changed = ImGui::SliderFloat3("Offset", p3, -5.0, 5.0, "%.3f", 0);
+					auto changed = ImGui::DragFloat3("Offset", p3, 0.01, -500.0, 500.0, "%.3f", 0);
 					if (changed) {
 						(*element).modifiers[index].attribute0 = p3[0];
 						(*element).modifiers[index].attribute1 = p3[1];
 						(*element).modifiers[index].attribute2 = p3[2];
 					}
-					ImGui::SliderFloat("Factor", &(*element).modifiers[index].attribute3, 0.0, 4.0, "%.3f", 0);
-					ImGui::SliderFloat("Frequency", &(*element).modifiers[index].attribute4, 0.0, 4.0, "%.3f", 0);
+					ImGui::DragFloat("Factor", &(*element).modifiers[index].attribute3, 0.01, 0.0, 4.0, "%.3f", 0);
+					ImGui::DragFloat("Frequency", &(*element).modifiers[index].attribute4, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -82,7 +84,7 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::TWIST) {
 				if (ImGui::TreeNode("Twist Modifier"))
 				{
-					ImGui::SliderFloat("Power", &(*element).modifiers[index].attribute0, 0.0, 4.0, "%.3f", 0);
+					ImGui::DragFloat("Power", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -92,7 +94,7 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::BEND) {
 				if (ImGui::TreeNode("Bend Modifier"))
 				{
-					ImGui::SliderFloat("Power", &(*element).modifiers[index].attribute0, 0.0, 4.0, "%.3f", 0);
+					ImGui::DragFloat("Power", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -102,7 +104,7 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::REPETITION) {
 				if (ImGui::TreeNode("Repetition Modifier"))
 				{
-					ImGui::SliderFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.0, 10.0, "%.3f", 0);
+					ImGui::DragFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -112,10 +114,10 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::REPETITION_LIMITED) {
 				if (ImGui::TreeNode("Repetition Limited Modifier"))
 				{
-					ImGui::SliderFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.0, 10.0, "%.3f", 0);
+					ImGui::DragFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
 
 					float p3[3] = { (*element).modifiers[index].attribute1, (*element).modifiers[index].attribute2, (*element).modifiers[index].attribute3 };
-					auto changed = ImGui::SliderFloat3("Offset", p3, 0.0, 20.0, "%.3f", 0);
+					auto changed = ImGui::DragFloat3("Offset", p3, 0.01, 0.0, 20.0, "%.3f", 0);
 					if (changed) {
 						(*element).modifiers[index].attribute1 = p3[0];
 						(*element).modifiers[index].attribute2 = p3[1];
@@ -130,7 +132,7 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::ROUND) {
 				if (ImGui::TreeNode("Round Modifier"))
 				{
-					ImGui::SliderFloat("Strength", &(*element).modifiers[index].attribute0, 0.0, 4.0, "%.3f", 0);
+					ImGui::DragFloat("Strength", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -161,22 +163,22 @@ namespace RMImGui {
 	}
 	void DisplayElement(ImGuiData& data, int element) {
 		auto p = &data.primitives[element];
-		if (p->prim_type == 3) {
-			DisplayCube(p);
-		}
 		if (p->prim_type == 1) {
 			DisplaySphere(p);
 		}
 		if (p->prim_type == 2) {
 			DisplayTorus(p);
 		}
+		if (p->prim_type == 3) {
+			DisplayCube(p);
+		}
 		if (p->prim_type == 4) {
 			DisplayMandelbulb(p);
 		}
 
-		DisplayModifiers(p, 0);
-		DisplayModifiers(p, 1);
-		DisplayModifiers(p, 2);
+		for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER; i++) {
+			DisplayModifiers(p, i);
+		}
 
 		auto clicked = ImGui::Button("Delete");
 		if (clicked) {
@@ -245,7 +247,7 @@ namespace RMImGui {
 		if (p.modifier == Primitive::GroupModifierType::SMOOTH_INTERSECTION ||
 			p.modifier == Primitive::GroupModifierType::SMOOTH_SUBTRACTION ||
 			p.modifier == Primitive::GroupModifierType::SMOOTH_UNION) {
-			ImGui::SliderFloat("Smoothing factor", &(data.groupPrimitives[i].primAttribute), 0.0, 10.0, "%.3f", 0);
+			ImGui::DragFloat("Smoothing factor", &(data.groupPrimitives[i].primAttribute), 0.01, 0.0, 10.0, "%.3f", 0);
 		}
 
 		if (ImGui::Button("Delete")) {
@@ -289,9 +291,7 @@ namespace RMImGui {
 		}
 	}
 
-	void RenderImGui(ImGuiData& data) {
-
-		ImGui::Begin("Objects");
+	void DisplayObjects(ImGuiData& data) {
 		ImGui::BeginTabBar("##tabs");
 		if (ImGui::BeginTabItem("Engine")) {
 			auto selected = "Light Shading";
@@ -371,6 +371,42 @@ namespace RMImGui {
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
+	}
+
+	void DisplayFileMenu(ImGuiData& data) {
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("Open", "Ctrl+O")) {
+				auto file = RMIO::ExplorerOpenFile();
+				
+				if (file.selected) {
+					auto content = RMIO::Load(file.path);
+					auto im = Scene::convertScene(Scene::toScene(content));
+					for(int i = 0; i < COUNT_PRIMITIVE; i++){
+						data.primitives[i] = im.primitives[i];
+					}
+					for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+						data.groupPrimitives[i] = im.groupPrimitives[i];
+					}
+				}
+			}
+			if (ImGui::MenuItem("Save", "Ctrl+S") || ImGui::MenuItem("Save As", "Ctrl+Shift+S")) {
+				auto file = RMIO::ExplorerSaveFile();
+
+				if (file.selected) {
+					RMIO::Save(file.path, Scene::toJson(Scene::createScene(data)));
+				}
+			}
+			ImGui::EndMenu();
+		}
+	}
+
+	void RenderImGui(ImGuiData& data) {
+		ImGui::BeginMainMenuBar();
+		DisplayFileMenu(data);
+		ImGui::EndMainMenuBar();
+
+		ImGui::Begin("Objects");
+		DisplayObjects(data);
 		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
