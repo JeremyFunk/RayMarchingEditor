@@ -8,7 +8,7 @@ namespace Scene {
     struct SceneGroupModifier {
         Primitive::GroupModifierType modifier;
         int prim0, prim1, prim2, prim3;
-        float primAttribute;
+        float prim_attribute;
     };
     struct SceneModifier {
         Primitive::ModifierType modifier;

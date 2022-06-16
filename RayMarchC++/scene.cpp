@@ -47,7 +47,7 @@ namespace Scene {
                 g.prim1 = data.groupPrimitives[j].prim1;
                 g.prim2 = data.groupPrimitives[j].prim2;
                 g.prim3 = data.groupPrimitives[j].prim3;
-                g.primAttribute = data.groupPrimitives[j].primAttribute;
+                g.prim_attribute = data.groupPrimitives[j].primAttribute;
 
                 scene.group_modifiers.push_back(g);
             }
@@ -72,17 +72,17 @@ namespace Scene {
                 m["attribute4"] = scene.objects[i].modifiers[j].attribute4;
                 modifiers.push_back(m);
             }
-            o["position"]["x"] = scene.objects[i].position.x;
-            o["position"]["y"] = scene.objects[i].position.y;
-            o["position"]["z"] = scene.objects[i].position.z;
+            o["position"][0] = scene.objects[i].position.x;
+            o["position"][1] = scene.objects[i].position.y;
+            o["position"][2] = scene.objects[i].position.z;
 
-            o["rotation"]["x"] = scene.objects[i].rotation.x;
-            o["rotation"]["y"] = scene.objects[i].rotation.y;
-            o["rotation"]["z"] = scene.objects[i].rotation.z;
+            o["rotation"][0] = scene.objects[i].rotation.x;
+            o["rotation"][1] = scene.objects[i].rotation.y;
+            o["rotation"][2] = scene.objects[i].rotation.z;
 
-            o["scale"]["x"] = scene.objects[i].scale.x;
-            o["scale"]["y"] = scene.objects[i].scale.y;
-            o["scale"]["z"] = scene.objects[i].scale.z;
+            o["scale"][0] = scene.objects[i].scale.x;
+            o["scale"][1] = scene.objects[i].scale.y;
+            o["scale"][2] = scene.objects[i].scale.z;
 
             o["prim_type"] = scene.objects[i].prim_type;
             o["values"] = scene.objects[i].values;
@@ -102,14 +102,14 @@ namespace Scene {
             g["prim1"] = scene.group_modifiers[i].prim1;
             g["prim2"] = scene.group_modifiers[i].prim2;
             g["prim3"] = scene.group_modifiers[i].prim3;
-            g["primAttribute"] = scene.group_modifiers[i].primAttribute;
+            g["prim_attribute"] = scene.group_modifiers[i].prim_attribute;
 
             group_modifiers.push_back(g);
         }
 
         json j;
         j["objects"] = objects;
-        j["groupPrimitive"] = group_modifiers;
+        j["group_modifiers"] = group_modifiers;
 
         return j.dump();
     }
@@ -124,9 +124,9 @@ namespace Scene {
             json jo = j["objects"][i];
             SceneObject o;
             o.modifiers = std::vector<SceneModifier>();
-            o.position = glm::vec3(jo["position"]["x"], jo["position"]["y"], jo["position"]["z"]);
-            o.rotation = glm::vec3(jo["rotation"]["x"], jo["rotation"]["y"], jo["rotation"]["z"]);
-            o.scale = glm::vec3(jo["scale"]["x"], jo["scale"]["y"], jo["scale"]["z"]);
+            o.position = glm::vec3(jo["position"][0], jo["position"][1], jo["position"][2]);
+            o.rotation = glm::vec3(jo["rotation"][0], jo["rotation"][1], jo["rotation"][2]);
+            o.scale = glm::vec3(jo["scale"][0], jo["scale"][1], jo["scale"][2]);
 
             o.name = jo["name"].get<std::string>();
 
@@ -157,12 +157,12 @@ namespace Scene {
 
         }
 
-        for (int i = 0; i < j["groupPrimitive"].size(); i++) {
-            json jg = j["groupPrimitive"][i];
+        for (int i = 0; i < j["group_modifiers"].size(); i++) {
+            json jg = j["group_modifiers"][i];
             SceneGroupModifier g;
 
             g.modifier = jg["modifier"];
-            g.primAttribute = jg["primAttribute"];
+            g.prim_attribute = jg["prim_attribute"];
             g.prim0 = jg["prim0"];
             g.prim1 = jg["prim1"];
             g.prim2 = jg["prim2"];
@@ -171,11 +171,11 @@ namespace Scene {
             s.group_modifiers.push_back(g);
         }
 
-        for (int i = j["groupPrimitive"].size(); i < COUNT_GROUP_MODIFIER; i++) {
+        for (int i = j["group_modifiers"].size(); i < COUNT_GROUP_MODIFIER; i++) {
             SceneGroupModifier g;
 
             g.modifier = Primitive::GroupModifierType::NONE_GROUP;
-            g.primAttribute = 0;
+            g.prim_attribute = 0;
 
             s.group_modifiers.push_back(g);
         }
@@ -192,7 +192,7 @@ namespace Scene {
             g.prim1 = scene.group_modifiers[i].prim1;
             g.prim2 = scene.group_modifiers[i].prim2;
             g.prim3 = scene.group_modifiers[i].prim3;
-            g.primAttribute = scene.group_modifiers[i].primAttribute;
+            g.primAttribute = scene.group_modifiers[i].prim_attribute;
 
             d.groupPrimitives[i] = g;
         }
@@ -220,11 +220,11 @@ namespace Scene {
                 }
             }
 
-            p.transformation.position = scene.objects[i].position;
-            p.transformation.rotation = scene.objects[i].rotation;
-            p.transformation.scale = scene.objects[i].scale;
+            p.transformation.position = glm::vec3(scene.objects[i].position[0], scene.objects[i].position[1], scene.objects[i].position[2]);
+            p.transformation.rotation = glm::vec3(scene.objects[i].rotation[0], scene.objects[i].rotation[1], scene.objects[i].rotation[2]);
+            p.transformation.scale = glm::vec3(scene.objects[i].scale[0], scene.objects[i].scale[1], scene.objects[i].scale[2]);
             Primitive::updateTransformation(&p);
-
+            
             p.name = scene.objects[i].name;
 
             p.prim_type = scene.objects[i].prim_type;
