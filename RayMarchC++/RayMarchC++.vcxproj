@@ -170,6 +170,7 @@
     <ClInclude Include="..\..\imgui-docking\imgui\imstb_truetype.h" />
     <ClInclude Include="arcball.h" />
     <ClInclude Include="constants.h" />
+    <ClInclude Include="data.h" />
     <ClInclude Include="free_cam.h" />
     <ClInclude Include="imgui_handler.h" />
     <ClInclude Include="json.hpp" />

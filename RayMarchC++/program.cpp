@@ -30,19 +30,24 @@ using namespace glm;
 #include "free_cam.h"
 #include "imgui_handler.h"
 #include "scene.h"
-
-int screen_width = 1280;
-int screen_height = 720;
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+int screen_width = 1920;
+int screen_height = 1080;
 float lastX = screen_width / 2.0f;
 float lastY = screen_height / 2.0f;
 bool firstMouse = true;
+bool enteredCam = false;
 
 float deltaTime = 0.0f;	
 float lastFrame = 0.0f;
 
+
 int cam_mode = 0;
 
 Camera camera(glm::vec3(0.0, 0.0, 3.0));
+static RMImGui::ImGuiData data;
 
 enum ShadingMode {
 	Light, Normal, Flat
@@ -57,6 +62,11 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, screen_width, screen_height);
 }
 
+void move() {
+	if (!data.reposition_cam) {
+		enteredCam = false;
+	}
+}
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
 	float xpos = static_cast<float>(xposIn);
@@ -69,7 +79,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 		firstMouse = false;
 	}
 
-	float xoffset = xpos - lastX;
+	float xoffset = lastX - xpos;
 	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
 	lastX = xpos;
@@ -79,26 +89,69 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 
 	if (cam_mode == 1) {
 		camera.ProcessMouseMovement(xoffset, yoffset);
+		if (xoffset != 0 || yoffset != 0) {
+			move();
+		}
 	}
 }
 
+
 void processInput(GLFWwindow* window)
 {
+	bool moved = false;
 	if (cam_mode == 1) {
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 			camera.ProcessKeyboard(FORWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+			moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 			camera.ProcessKeyboard(BACKWARD, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+			moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
 			camera.ProcessKeyboard(LEFT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+			moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 			camera.ProcessKeyboard(RIGHT, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+			moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 			camera.ProcessKeyboard(UP, deltaTime);
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+			moved = true;
+		}
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 			camera.ProcessKeyboard(DOWN, deltaTime);
+			moved = true;
+		}
+		if (moved) {
+			move();
+		}
 	}
 
+}
+
+void update_camera() {
+	camera.Position = vec3(data.cam_pos);
+
+	camera.Yaw = glm::degrees(atan2(data.cam_rot.x, data.cam_rot.z));
+
+	camera.Pitch = glm::degrees(asin(-data.cam_rot.y));
+	camera.updateCameraVectors();
+}
+
+void update_render_camera() {
+	float pitchRadians = to_radians(camera.Pitch);
+	float yawRadians = to_radians(camera.Yaw);
+
+	float sinPitch = sin(pitchRadians);
+	float cosPitch = cos(pitchRadians);
+	float sinYaw = sin(yawRadians);
+	float cosYaw = cos(yawRadians);
+
+ 	data.cam_rot = glm::normalize(vec3(cosPitch * sinYaw, -sinPitch, cosPitch * cosYaw));
+	data.cam_pos = camera.Position;
+	data.cam_py = vec2(camera.Pitch, camera.Yaw);
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -111,14 +164,22 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			cam_mode = 1;
 		}
 	}
+	if (key == GLFW_KEY_0 && action == GLFW_RELEASE) {
+		enteredCam = true;
+		update_camera();
+	}
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	if (cam_mode == 1) {
 		camera.ProcessMouseScroll(static_cast<float>(yoffset));
+		if (yoffset != 0) {
+			move();
+		}
 	}
 }
+
 int setupWindow() {
 	// Initialise GLFW
 	if (!glfwInit())
@@ -135,7 +196,7 @@ int setupWindow() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1920, 1080, "Tutorial 02 - Red triangle", NULL, NULL);
+	window = glfwCreateWindow(screen_width, screen_height, "Tutorial 02 - Red triangle", NULL, NULL);
 	if (window == NULL) {
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
 		getchar();
@@ -165,7 +226,6 @@ int setupWindow() {
 	return 0;
 }
 
-static RMImGui::ImGuiData data;
 
 int main()
 {
@@ -176,9 +236,9 @@ int main()
 		return -1;
 	}
 
-	
+	auto mat = transformationMatrix(glm::vec3(90, 0, 0), glm::vec3(2.0, 3.0, 4.0));
 
-	auto mat = transformationMatrix(glm::vec3(90, 45, 20), glm::vec3(2.0, 3.0, 4.0));
+	std::cout << to_string(mat) << std::endl;
 
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
@@ -189,8 +249,6 @@ int main()
 	
 	auto uniforms = Shader::LoadUniforms(programID);
 
-	
-
 	auto prim1 = Primitive::getCubePrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	auto prim2 = Primitive::getSpherePrimitive(1.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	//prim.add_distort_modifier(vec3(1), 0.2, 2.2);
@@ -200,6 +258,8 @@ int main()
 
 	Primitive::ShaderGroupPrimitive group = Primitive::opSubtractionSmooth(1, 0, 0.2);
 	data.groupPrimitives[0] = group;
+	data.cam_pos = vec3(0.0, 0.0, 4.0);
+	data.cam_rot = vec3(-1.0, 0.0, 0.0);
 
 	//primitives.push_back(Primitive::getTorusPrimitive(1.0, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 45.0, 0.0), vec3(1.0, 1.0, 1.0)));
 	//primitives.push_back(Primitive::getMandelbulbPrimitive(0.0, vec3(0.0, 0.0, 4.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0)));
@@ -236,15 +296,15 @@ int main()
 	glm::vec3 up(0, 1, 0);
 	//ArcballCamera camera(eye, center, up);
 	
-	
 	glm::vec2 prev_mouse(-2.f);
 
 	float power = 0.0;
 
 	data.shading_mode = &shading_mode;
 	
-
 	do{
+		data.cam_py = vec2(camera.Pitch, camera.Yaw);
+		//std::cout << glm::to_string(data.cam_py) << std::endl;
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -254,21 +314,31 @@ int main()
 		int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 
 		glfwGetCursorPos(window, &xpos, &ypos);
-
-		auto view = camera.GetViewMatrix();
 		
+		auto view = camera.GetViewMatrix();
+
+
+		if (data.reposition_cam && enteredCam) {
+			update_render_camera();
+		}
+		else if (enteredCam) {
+			update_camera();
+		}
+		bool render_cam = glm::length(camera.Position - data.cam_pos) > 0.5;
 
 		glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
-		//std::cout << glm::to_string(camera.eye()) << std::endl;
 		glUniform3f(uniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
 		glUniform2f(uniforms.u_resolution, float(screen_width), float(screen_height));
 		glUniform1i(uniforms.shading_mode, shading_mode);
+		glUniform1i(uniforms.render_cam, render_cam);
 		int prim_count = 0;
 		for (auto p : data.primitives) {
 			if (p.prim_type != 0) {
 				prim_count += 1;
 			}
 		}
+
+		glUniform3f(uniforms.camera_pos_render, data.cam_pos.x, data.cam_pos.y, data.cam_pos.z);
 		glUniform1i(uniforms.u_prim_count, prim_count);
 		PrepareShader(data.primitives, data.groupPrimitives, uniforms);
 

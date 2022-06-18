@@ -9,6 +9,9 @@ namespace RMImGui {
         int* shading_mode;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
         Primitive::ShaderGroupPrimitive groupPrimitives[COUNT_GROUP_MODIFIER];
+        glm::vec3 cam_pos, cam_rot;
+        glm::vec2 cam_py;
+        bool reposition_cam = false;
 
         void addPrimitive(Primitive::ShaderPrimitive prim) {
             for (int i = 0; i < COUNT_PRIMITIVE; i++) {

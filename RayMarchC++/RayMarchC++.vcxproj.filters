@@ -125,6 +125,9 @@
     <ClInclude Include="RMIO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="data.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="vertex.vs">

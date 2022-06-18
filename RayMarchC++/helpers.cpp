@@ -64,7 +64,7 @@ glm::mat3x3 transformationMatrix(glm::vec3 rotation, glm::vec3 scale) {
     glm::mat3x3 matrix = rotationMatrix(rotation);
     glm::mat3x3 scaleMat = glm::scale(glm::mat4x4(1.0), scale);
 
-    return glm::inverse(matrix * scaleMat);
+    return matrix * scaleMat;
 }
 
 glm::vec3 sphericalCoords(glm::vec3 cartesian) {

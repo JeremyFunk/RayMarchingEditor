@@ -48,9 +48,12 @@ struct DistanceResult{
 uniform vec2 u_resolution;
 uniform Primitive u_primitives[PRIM_COUNT];
 uniform vec3 camera_pos;
+uniform vec3 camera_pos_render;
+uniform vec3 camera_dir_render;
 uniform mat4 camera_rot;
 uniform int shading_mode;
 uniform int u_prim_count;
+uniform bool render_cam;
 uniform GroupModifier u_group_modifier[GROUP_COUNT];
 out vec4 fragColor;
 
@@ -184,6 +187,11 @@ float op (float d1, float d2, GroupModifier m){
     return min(d1, d2);
 }
 
+float renderCamera(vec3 pt){
+    vec3 transformed = camera_pos_render - pt;
+    return sphere(transformed, 0.1);
+}
+
 DistanceResult getDist(vec3 pt, int full){
     float de[PRIM_COUNT];
 
@@ -216,6 +224,7 @@ DistanceResult getDist(vec3 pt, int full){
             de[i] = modify_distance(mandelbulb(transformed, u_primitives[i].attribute0), i);
         }
     }
+
     float de_all = MAX_DIST;
     float rawDistance = MAX_DIST;
     for(i = 0; i < u_prim_count; i++){
@@ -243,6 +252,10 @@ DistanceResult getDist(vec3 pt, int full){
             de_all = min(de_all, de[i]);
         }
         rawDistance = min(rawDistance, de[i]);
+    }
+
+    if(render_cam){
+        de_all = min(de_all, renderCamera(pt));
     }
     
     return DistanceResult(de_all, rawDistance);
@@ -355,7 +368,7 @@ void main()
 {
     vec2 uv = ((f_texCoords.xy - 0.5) * u_resolution.xy) / u_resolution.y;
 
-    vec3 rayDir = (vec4(normalize(vec3(-uv.x, uv.y, -1.)), 0.0) * camera_rot).xyz;
+    vec3 rayDir = (vec4(normalize(vec3(uv.x, uv.y, -1.)), 0.0) * camera_rot).xyz;
     vec2 res = u_resolution.xy;
 
     //vec3 rayDir = normalize(vec3(f_texCoords.x, f_texCoords.y, 1.));
@@ -368,6 +381,8 @@ void main()
     ray r = ray(camera_pos,
                 rayDir);
     
+
+
     RayMarchResult dist = rayMarchFull(r);
     vec3 intersectPt = r.ori + r.dir * dist.dist;
     vec3 color = vec3(1.0, 1.0, 1.0);
@@ -395,7 +410,7 @@ void main()
     }
 
     if(dist.hitRaw || dist.hit){
-        //color += vec3(0.2, 0.0, 0.0);
+        color += vec3(0.2, 0.0, 0.0);
     }
     
     // Output to screen

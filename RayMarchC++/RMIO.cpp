@@ -100,7 +100,7 @@ namespace RMIO {
 }
 
 namespace RMIO {
-    COMDLG_FILTERSPEC ComDlgFS[3] = { {L"RayMarching Project Files (*.rma)", L"*.rma"},{L"All Files",L"*.*"} };
+    COMDLG_FILTERSPEC ComDlgFS[3] = { {L"RayMarching Project Files (*.rma.json)", L"*.rma.json"},{L"All Files",L"*.*"} };
 
     SaveReturn ExplorerOpenFile()
     {
@@ -181,7 +181,7 @@ namespace RMIO {
         IFileSaveDialog* f_FileSystem;
 
         f_SysHr = CoCreateInstance(CLSID_FileSaveDialog, NULL, CLSCTX_ALL, IID_IFileSaveDialog, reinterpret_cast<void**>(&f_FileSystem));
-        f_FileSystem->SetDefaultExtension(L"rma");
+        f_FileSystem->SetDefaultExtension(L"rma.json");
         f_FileSystem->SetFileTypes(2, ComDlgFS);
         if (FAILED(f_SysHr)) {
             CoUninitialize();

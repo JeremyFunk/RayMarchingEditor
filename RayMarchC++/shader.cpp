@@ -15,7 +15,10 @@ namespace Shader {
 		u.camera_rot = LoadUniform(program, "camera_rot");
 		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
-		u.u_prim_count = LoadUniform(program, "u_prim_count");
+		u.u_prim_count = LoadUniform(program, "u_prim_count"); 
+		u.camera_pos_render = LoadUniform(program, "camera_pos_render"); 
+		u.render_cam = LoadUniform(program, "render_cam");
+		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
 		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
 			u.u_group_modifier[i].modifier = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].modifier").c_str());
 			u.u_group_modifier[i].primAttribute = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].primAttribute").c_str());
@@ -54,6 +57,7 @@ namespace Shader {
 
 	void PrepareShader(const Primitive::ShaderPrimitive primitives[], const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms)
 	{
+
 		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
 			glUniform1i(uniforms.u_group_modifier[i].modifier, modifiers[i].modifier);
 			glUniform1i(uniforms.u_group_modifier[i].prim0, modifiers[i].prim0);

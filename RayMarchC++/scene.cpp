@@ -1,6 +1,7 @@
 #include "scene.h"
 #include "json.hpp"
 #include <iostream>
+#include <algorithm>
 
 using json = nlohmann::json;
 namespace Scene {
@@ -9,6 +10,9 @@ namespace Scene {
         Scene scene;
         scene.objects = std::vector<SceneObject>();
         scene.group_modifiers = std::vector<SceneGroupModifier>();
+        scene.cam_pos = data.cam_pos;
+        scene.cam_rot = data.cam_rot;
+        scene.cam_py = data.cam_py;
 
         for (int i = 0; i < COUNT_PRIMITIVE; i++) {
             if (data.primitives[i].prim_type != 0) {
@@ -110,16 +114,30 @@ namespace Scene {
         json j;
         j["objects"] = objects;
         j["group_modifiers"] = group_modifiers;
-
+        j["camera"]["cam_pos"][0] = scene.cam_pos.x;
+        j["camera"]["cam_pos"][1] = scene.cam_pos.y;
+        j["camera"]["cam_pos"][2] = scene.cam_pos.z;
+        j["camera"]["cam_rot"][0] = scene.cam_rot.x;
+        j["camera"]["cam_rot"][1] = scene.cam_rot.y;
+        j["camera"]["cam_rot"][2] = scene.cam_rot.z;
+        j["camera"]["cam_py"][0] = scene.cam_py.x;
+        j["camera"]["cam_py"][1] = scene.cam_py.y;
         return j.dump();
     }
 
     Scene toScene(std::string str) {
+        std::cout << str << std::endl;
+        str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+        std::cout << str << std::endl;
         json j = json::parse(str);
         Scene s;
         s.objects = std::vector<SceneObject>();
         s.group_modifiers = std::vector<SceneGroupModifier>();
         
+        s.cam_pos = glm::vec3(j["camera"]["cam_pos"][0], j["camera"]["cam_pos"][1], j["camera"]["cam_pos"][2]);
+        s.cam_rot = glm::vec3(j["camera"]["cam_rot"][0], j["camera"]["cam_rot"][1], j["camera"]["cam_rot"][2]);
+        s.cam_py = glm::vec2(j["camera"]["cam_py"][0], j["camera"]["cam_py"][1]);
+
         for (int i = 0; i < j["objects"].size(); i++) {
             json jo = j["objects"][i];
             SceneObject o;
@@ -197,6 +215,9 @@ namespace Scene {
             d.groupPrimitives[i] = g;
         }
 
+        d.cam_pos = scene.cam_pos;
+        d.cam_rot = scene.cam_rot;
+        d.cam_py = scene.cam_py;
 
         for (int i = 0; i < scene.objects.size(); i++) {
             Primitive::ShaderPrimitive p;

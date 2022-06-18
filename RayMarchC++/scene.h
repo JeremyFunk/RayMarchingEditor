@@ -29,6 +29,8 @@ namespace Scene {
     struct Scene {
         std::vector<SceneObject> objects;
         std::vector<SceneGroupModifier> group_modifiers;
+        glm::vec3 cam_pos, cam_rot;
+        glm::vec2 cam_py;
     };
 
     Scene createScene(RMImGui::ImGuiData& data);

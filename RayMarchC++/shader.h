@@ -45,7 +45,10 @@ namespace Shader {
 		GLuint camera_rot;
 		GLuint u_resolution;
 		GLuint shading_mode;
+		GLuint render_cam;
 		GLuint u_prim_count;
+		GLuint camera_pos_render; 
+		GLuint camera_dir_render; 
 		PrimitiveUniforms primitives[20];
 		GroupModifier u_group_modifier[2];
 	};
