@@ -15,7 +15,8 @@ namespace Shader {
 		u.camera_rot = LoadUniform(program, "camera_rot");
 		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
-		u.u_prim_count = LoadUniform(program, "u_prim_count"); 
+		u.u_prim_count = LoadUniform(program, "u_prim_count");
+		u.u_texture = LoadUniform(program, "u_texture");
 		u.camera_pos_render = LoadUniform(program, "camera_pos_render"); 
 		u.render_cam = LoadUniform(program, "render_cam");
 		u.camera_dir_render = LoadUniform(program, "camera_dir_render");

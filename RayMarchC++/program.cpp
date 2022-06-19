@@ -33,6 +33,7 @@ using namespace glm;
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <stb_image.h>
 int screen_width = 1920;
 int screen_height = 1080;
 float lastX = screen_width / 2.0f;
@@ -219,6 +220,8 @@ int setupWindow() {
 
 	// Dark blue background
 	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSetWindowSizeCallback(window, window_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetKeyCallback(window, key_callback);
@@ -261,6 +264,13 @@ int main()
 	data.cam_pos = vec3(0.0, 0.0, 4.0);
 	data.cam_rot = vec3(-1.0, 0.0, 0.0);
 
+	if (!LoadTextureFromFile("images/play.png", &data.textures.timeline.play)) return -1;
+	if (!LoadTextureFromFile("images/next.png", &data.textures.timeline.next)) return -1;
+	if (!LoadTextureFromFile("images/previous.png", &data.textures.timeline.previous)) return -1;
+	if (!LoadTextureFromFile("images/stop.png", &data.textures.timeline.stop)) return -1;
+	if (!LoadTextureFromFile("images/revplay.png", &data.textures.timeline.reverse_play)) return -1;
+	if (!LoadTextureFromFile("images/pause.png", &data.textures.timeline.pause)) return -1;
+	
 	//primitives.push_back(Primitive::getTorusPrimitive(1.0, 0.5, vec3(0.0, 0.0, 0.0), vec3(0.0, 45.0, 0.0), vec3(1.0, 1.0, 1.0)));
 	//primitives.push_back(Primitive::getMandelbulbPrimitive(0.0, vec3(0.0, 0.0, 4.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0)));
 
@@ -301,23 +311,23 @@ int main()
 	float power = 0.0;
 
 	data.shading_mode = &shading_mode;
-	
+
 	do{
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		data.cam_py = vec2(camera.Pitch, camera.Yaw);
 		//std::cout << glm::to_string(data.cam_py) << std::endl;
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		data.timeline.update(deltaTime);
+
 		processInput(window);
-
 		int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-
 		glfwGetCursorPos(window, &xpos, &ypos);
 		
 		auto view = camera.GetViewMatrix();
-
-
 		if (data.reposition_cam && enteredCam) {
 			update_render_camera();
 		}
@@ -342,8 +352,6 @@ int main()
 		glUniform1i(uniforms.u_prim_count, prim_count);
 		PrepareShader(data.primitives, data.groupPrimitives, uniforms);
 
-		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

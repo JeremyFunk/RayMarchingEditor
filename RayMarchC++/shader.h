@@ -47,6 +47,7 @@ namespace Shader {
 		GLuint shading_mode;
 		GLuint render_cam;
 		GLuint u_prim_count;
+		GLuint u_texture;
 		GLuint camera_pos_render; 
 		GLuint camera_dir_render; 
 		PrimitiveUniforms primitives[20];
