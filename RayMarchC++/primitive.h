@@ -1,9 +1,27 @@
 #ifndef PRIMITIVE_H
 #define PRIMITIVE_H
-#include "glm/glm.hpp"
 #include <string>
+#include <vector>
 #include "constants.h"
+#include "animator.h"
+#include <glm/glm.hpp> 
+
 namespace Primitive {
+
+	struct Selectable {
+	public:
+		bool isSelected() {
+			return selected;
+		}
+		void setSelected(bool p_selected) {
+			selected = p_selected;
+		}
+		std::vector<int> getKeyframes(){}
+	private:
+		bool selected = false;
+	};
+
+
 	enum ModifierType {
 		NONE_MOD, DISTORT, TWIST, BEND, REPETITION, REPETITION_LIMITED, ROUND
 	};
@@ -13,28 +31,59 @@ namespace Primitive {
 	};
 
 	struct Transformation {
-		glm::vec3 position;
-		glm::vec3 rotation;
-		glm::vec3 scale;
+		AnimatedFloatVec3 position;
+		AnimatedFloatVec3 rotation;
+		AnimatedFloatVec3 scale;
 		glm::mat3x3 matrix;
+
+		void animate(int frame);
+		void getKeyframes(std::vector<int>* p_keyframes) {
+			position.getKeyframes(p_keyframes);
+			rotation.getKeyframes(p_keyframes);
+			scale.getKeyframes(p_keyframes);
+		}
 	};
 
-	struct Modifier {
-		float attribute0;
-		float attribute1;
-		float attribute2;
-		float attribute3;
-		float attribute4;
+	struct Modifier : virtual public Selectable {
+		AnimatedFloat attribute0;
+		AnimatedFloat attribute1;
+		AnimatedFloat attribute2;
+		AnimatedFloat attribute3;
+		AnimatedFloat attribute4;
 		ModifierType modifier;
+
+		void Animate(int frame) {
+			attribute0.Recalculate(frame);
+			attribute1.Recalculate(frame);
+			attribute2.Recalculate(frame);
+			attribute3.Recalculate(frame);
+			attribute4.Recalculate(frame);
+		}
+
+		void getKeyframes(std::vector<int>* p_keyframes) {
+			attribute0.getKeyframes(p_keyframes);
+			attribute1.getKeyframes(p_keyframes);
+			attribute2.getKeyframes(p_keyframes);
+			attribute3.getKeyframes(p_keyframes);
+			attribute4.getKeyframes(p_keyframes);
+		}
 	};
 
-	struct ShaderGroupPrimitive {
+	struct ShaderGroupPrimitive: virtual public Selectable {
 		GroupModifierType modifier;
 		int prim0;
 		int prim1;
 		int prim2;
 		int prim3;
-		float primAttribute;
+		AnimatedFloat primAttribute;
+
+		void getKeyframes(std::vector<int>* p_keyframes) {
+			primAttribute.getKeyframes(p_keyframes);
+		}
+
+		void animate(int frame) {
+			primAttribute.Recalculate(frame);
+		}
 
 		std::string name() {
 			if (modifier == GroupModifierType::UNION)
@@ -52,8 +101,8 @@ namespace Primitive {
 		}
 	};
 
-	struct ShaderPrimitive {
-		float values[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	struct ShaderPrimitive : virtual public Selectable {
+		AnimatedFloat values[10];
 		Modifier modifiers[COUNT_PRIMITIVE_MODIFIER];
 		int mod_count = 0;
 		int prim_type;
@@ -64,7 +113,24 @@ namespace Primitive {
 			return "{prim_type: " + std::to_string(prim_type) + ", name:" + std::string(name);
 		}
 
-		void remove_modifier(int index) {
+		void getKeyframes(std::vector<int>* p_keyframes) {
+			for (int i = 0; i < 10 - 1; i++) {
+				values[i].getKeyframes(p_keyframes);
+			}
+			transformation.getKeyframes(p_keyframes);
+		}
+
+		void animate(int frame) {
+			for (int i = 0; i < 10 - 1; i++) {
+				values[i].Recalculate(frame);
+			}
+			for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER - 1; i++ ) {
+				modifiers[i].Animate(frame);
+			}
+			transformation.animate(frame);
+		}
+
+		void removeModifier(int index) {
 			modifiers[index].modifier = ModifierType::NONE_MOD;
 			mod_count -= 1;
 			for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER - 1; i++) {
@@ -80,7 +146,7 @@ namespace Primitive {
 			}
 		}
 
-		void add_distort_modifier(glm::vec3 offset, float factor, float freq) {
+		void addDistortModifier(glm::vec3 offset, float factor, float freq) {
 			modifiers[mod_count].modifier = DISTORT;
 			modifiers[mod_count].attribute0 = offset.x;
 			modifiers[mod_count].attribute1 = offset.y;
@@ -90,25 +156,25 @@ namespace Primitive {
 
 			mod_count += 1;
 		}
-		void add_twist_modifier(float power) {
+		void addTwistModifier(float power) {
 			modifiers[mod_count].modifier = TWIST;
 			modifiers[mod_count].attribute0 = power;
 
 			mod_count += 1;
 		}
-		void add_bend_modifier(float power) {
+		void addBendModifier(float power) {
 			modifiers[mod_count].modifier = BEND;
 			modifiers[mod_count].attribute0 = power;
 
 			mod_count += 1;
 		}
-		void add_repetition_modifier(float repetition_period) {
+		void addRepetitionModifier(float repetition_period) {
 			modifiers[mod_count].modifier = REPETITION;
 			modifiers[mod_count].attribute0 = repetition_period;
 
 			mod_count += 1;
 		}
-		void add_repetition_limited_modifier(float repetition_period, glm::vec3 limiter) {
+		void addRepetitionLimitedModifier(float repetition_period, glm::vec3 limiter) {
 			modifiers[mod_count].modifier = REPETITION_LIMITED;
 			modifiers[mod_count].attribute0 = repetition_period;
 			modifiers[mod_count].attribute1 = limiter.x;
@@ -117,7 +183,7 @@ namespace Primitive {
 
 			mod_count += 1;
 		}
-		void add_round_modifier(float thickness) {
+		void addRoundModifier(float thickness) {
 			modifiers[mod_count].modifier = ROUND;
 			modifiers[mod_count].attribute0 = thickness;
 

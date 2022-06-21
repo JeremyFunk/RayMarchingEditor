@@ -1,12 +1,20 @@
 
 #include "helpers.h"
+#include "helpers_glm.h"
 #include <glm/glm.hpp>
 #include <iostream>
 #include "primitive.h"
 
 namespace Primitive {
+	void Transformation::animate(int frame) {
+		position.Recalculate(frame);
+		rotation.Recalculate(frame);
+		scale.Recalculate(frame);
+		matrix = transformationMatrix(glm::vec3(rotation[0].value, rotation[1].value, rotation[2].value), glm::vec3(scale[0].value, scale[1].value, scale[2].value));
+	}
+
 	void updateTransformation(ShaderPrimitive* primitive) {
-		(*primitive).transformation.matrix = transformationMatrix(primitive->transformation.rotation, primitive->transformation.scale);
+		(*primitive).transformation.matrix = transformationMatrix(glm::vec3(primitive->transformation.rotation[0].value, primitive->transformation.rotation[1].value, primitive->transformation.rotation[2].value), glm::vec3(primitive->transformation.scale[0].value, primitive->transformation.scale[1].value, primitive->transformation.scale[2].value));
 	}
 
 	ShaderGroupPrimitive opSubtraction(int p1, int p2) {

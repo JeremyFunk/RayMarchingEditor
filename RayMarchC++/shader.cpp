@@ -65,7 +65,7 @@ namespace Shader {
 			glUniform1i(uniforms.u_group_modifier[i].prim1, modifiers[i].prim1);
 			glUniform1i(uniforms.u_group_modifier[i].prim2, modifiers[i].prim2);
 			glUniform1i(uniforms.u_group_modifier[i].prim3, modifiers[i].prim3);
-			glUniform1f(uniforms.u_group_modifier[i].primAttribute, modifiers[i].primAttribute);
+			glUniform1f(uniforms.u_group_modifier[i].primAttribute, modifiers[i].primAttribute.value);
 		}
 
 		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
@@ -78,25 +78,25 @@ namespace Shader {
 			glUniformMatrix3fv(uniforms.primitives[i].transformation, 1, GL_FALSE, &(*v).transformation.matrix[0][0]);
 
 			glUniform1i(uniforms.primitives[i].prim_type, (*v).prim_type);
-			glUniform3f(uniforms.primitives[i].position, (*v).transformation.position.x, (*v).transformation.position.y, (*v).transformation.position.z);
-			glUniform1f(uniforms.primitives[i].attribute0, (*v).values[0]);
-			glUniform1f(uniforms.primitives[i].attribute1, (*v).values[1]);
-			glUniform1f(uniforms.primitives[i].attribute2, (*v).values[2]);
-			glUniform1f(uniforms.primitives[i].attribute3, (*v).values[3]);
-			glUniform1f(uniforms.primitives[i].attribute4, (*v).values[4]);
-			glUniform1f(uniforms.primitives[i].attribute5, (*v).values[5]);
-			glUniform1f(uniforms.primitives[i].attribute6, (*v).values[6]);
-			glUniform1f(uniforms.primitives[i].attribute7, (*v).values[7]);
-			glUniform1f(uniforms.primitives[i].attribute8, (*v).values[8]);
-			glUniform1f(uniforms.primitives[i].attribute9, (*v).values[9]);
+			glUniform3f(uniforms.primitives[i].position, (*v).transformation.position[0].value, (*v).transformation.position[1].value, (*v).transformation.position[2].value);
+			glUniform1f(uniforms.primitives[i].attribute0, (*v).values[0].value);
+			glUniform1f(uniforms.primitives[i].attribute1, (*v).values[1].value);
+			glUniform1f(uniforms.primitives[i].attribute2, (*v).values[2].value);
+			glUniform1f(uniforms.primitives[i].attribute3, (*v).values[3].value);
+			glUniform1f(uniforms.primitives[i].attribute4, (*v).values[4].value);
+			glUniform1f(uniforms.primitives[i].attribute5, (*v).values[5].value);
+			glUniform1f(uniforms.primitives[i].attribute6, (*v).values[6].value);
+			glUniform1f(uniforms.primitives[i].attribute7, (*v).values[7].value);
+			glUniform1f(uniforms.primitives[i].attribute8, (*v).values[8].value);
+			glUniform1f(uniforms.primitives[i].attribute9, (*v).values[9].value);
 
 			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
 				glUniform1i(uniforms.primitives[i].modifiers[j].modifier, (*v).modifiers[j].modifier);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute0, (*v).modifiers[j].attribute0);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute1, (*v).modifiers[j].attribute1);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute2, (*v).modifiers[j].attribute2);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute3, (*v).modifiers[j].attribute3);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute4, (*v).modifiers[j].attribute4);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute0, (*v).modifiers[j].attribute0.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute1, (*v).modifiers[j].attribute1.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute2, (*v).modifiers[j].attribute2.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute3, (*v).modifiers[j].attribute3.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute4, (*v).modifiers[j].attribute4.value);
 			}
 		}
 	}

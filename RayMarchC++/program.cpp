@@ -22,18 +22,19 @@ GLFWwindow* window;
 using namespace glm;
 
 #include <glm/gtx/string_cast.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include <iostream>
 #include "RMIO.h"
 #include "primitive.h"
+#include "helpers_glm.h"
 #include "helpers.h"
 #include "shader.h"
 #include "free_cam.h"
 #include "imgui_handler.h"
 #include "scene.h"
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <stb_image.h>
 int screen_width = 1920;
 int screen_height = 1080;
 float lastX = screen_width / 2.0f;
@@ -133,11 +134,14 @@ void processInput(GLFWwindow* window)
 }
 
 void update_camera() {
-	camera.Position = vec3(data.cam_pos);
+	camera.Position = data.cam_pos.toVec();
 
-	camera.Yaw = glm::degrees(atan2(data.cam_rot.x, data.cam_rot.z));
+	//camera.Yaw = glm::degrees(atan2(data.cam_rot.x, data.cam_rot.z));
+	//camera.Pitch = glm::degrees(asin(-data.cam_rot.y));
 
-	camera.Pitch = glm::degrees(asin(-data.cam_rot.y));
+	camera.Yaw = data.cam_py[1].value;
+	camera.Pitch = data.cam_py[0].value;
+	std::cout << camera.Yaw << std::endl;
 	camera.updateCameraVectors();
 }
 
@@ -239,10 +243,6 @@ int main()
 		return -1;
 	}
 
-	auto mat = transformationMatrix(glm::vec3(90, 0, 0), glm::vec3(2.0, 3.0, 4.0));
-
-	std::cout << to_string(mat) << std::endl;
-
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
@@ -298,6 +298,7 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(tex_coords), tex_coords, GL_STATIC_DRAW);
 
 	RMImGui::SetupImGui(window);
+	ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
 
 	double xpos, ypos;
 
@@ -307,16 +308,26 @@ int main()
 	//ArcballCamera camera(eye, center, up);
 	
 	glm::vec2 prev_mouse(-2.f);
-
+	data.cam_py[0] = camera.Pitch;
+	data.cam_py[1] = camera.Yaw;
 	float power = 0.0;
-
 	data.shading_mode = &shading_mode;
-
+	int lastTimelineFrame = data.timeline.frame;
 	do{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		data.cam_py = vec2(camera.Pitch, camera.Yaw);
-		//std::cout << glm::to_string(data.cam_py) << std::endl;
+		if (cam_mode == 1) {
+			data.cam_py = vec2(camera.Pitch, camera.Yaw);
+		}
+		else {
+			camera.Pitch = data.cam_py[0].value;
+			camera.Yaw = data.cam_py[1].value;
+
+			camera.Position = data.cam_pos.toVec();
+
+			camera.updateCameraVectors();
+		}
+		
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
@@ -334,7 +345,7 @@ int main()
 		else if (enteredCam) {
 			update_camera();
 		}
-		bool render_cam = glm::length(camera.Position - data.cam_pos) > 0.5;
+		bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
 		glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
 		glUniform3f(uniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
@@ -348,10 +359,9 @@ int main()
 			}
 		}
 
-		glUniform3f(uniforms.camera_pos_render, data.cam_pos.x, data.cam_pos.y, data.cam_pos.z);
+		glUniform3f(uniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
 		glUniform1i(uniforms.u_prim_count, prim_count);
 		PrepareShader(data.primitives, data.groupPrimitives, uniforms);
-
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -395,6 +405,13 @@ int main()
 		// Swap buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		if (lastTimelineFrame != data.timeline.frame) {
+
+			data.animate(data.timeline.frame);
+		}
+
+		lastTimelineFrame = data.timeline.frame;
 
 	} // Check if the ESC key was pressed or the window was closed
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&

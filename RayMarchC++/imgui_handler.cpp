@@ -7,74 +7,58 @@
 #include "constants.h"
 #include "RMIO.h"
 #include "scene.h"
+#include "custom_imgui.h"
 namespace RMImGui {
-	void DisplayTransformation(Primitive::ShaderPrimitive* p) {
+	void DisplayTransformation(Primitive::ShaderPrimitive* p, int frame) {
 		auto transformation = &(*p).transformation;
-		float p3[3] = { (*transformation).position.x, (*transformation).position.y, (*transformation).position.z };
-		auto changed = ImGui::DragFloat3("Position", p3, 0.01, -100.0, 100.0, "%.3f", 0);
-		if (changed) {
-			(*transformation).position.x = p3[0];
-			(*transformation).position.y = p3[1];
-			(*transformation).position.z = p3[2];
-		}
+		AnimatedFloat* p3[3] = { &(*transformation).position[0], &(*transformation).position[1], &(*transformation).position[2] };
+		bool selected = ImGui::KeyframeDragFloat3("Position", frame, p3, 0.01, -100.0, 100.0, "%.3f", 0);
 
-		float r3[3] = { (*transformation).rotation.x, (*transformation).rotation.y, (*transformation).rotation.z };
-		changed = ImGui::DragFloat3("Rotation", r3, 1.0, -180.0, 180.0, "%.3f", 0);
-		if (changed) {
-			(*transformation).rotation.x = r3[0];
-			(*transformation).rotation.y = r3[1];
-			(*transformation).rotation.z = r3[2];
+		AnimatedFloat* r3[3] = { &(*transformation).rotation[0], &(*transformation).rotation[1], &(*transformation).rotation[2] };
+		selected = ImGui::KeyframeDragFloat3("Rotation", frame, r3, 1.0, 0.0, 0.0, "%.3f", 0) || selected;
 
-			Primitive::updateTransformation(p);
-		}
+		AnimatedFloat* s3[3] = { &(*transformation).scale[0], &(*transformation).scale[1], &(*transformation).scale[2] };
+		selected = ImGui::KeyframeDragFloat3("Scale", frame, s3, 0.01, -100.0, 100.0, "%.3f", 0) || selected;
 
-		float s3[3] = { (*transformation).scale.x, (*transformation).scale.y, (*transformation).scale.z };
-		changed = ImGui::DragFloat3("Scale", s3, 0.01, -100.0, 100.0, "%.3f", 0);
-		if (changed) {
-			(*transformation).scale.x = s3[0];
-			(*transformation).scale.y = s3[1];
-			(*transformation).scale.z = s3[2];
-
-			Primitive::updateTransformation(p);
+		if (selected) {
+			updateTransformation(p);
 		}
 	}
-	void DisplayCube(Primitive::ShaderPrimitive* cube) {
-		DisplayTransformation(cube);
+	void DisplayCube(Primitive::ShaderPrimitive* cube, int frame) {
+		DisplayTransformation(cube, frame);
 	}
-	void DisplaySphere(Primitive::ShaderPrimitive* sphere) {
-		DisplayTransformation(sphere);
+	void DisplaySphere(Primitive::ShaderPrimitive* sphere, int frame) {
+		DisplayTransformation(sphere, frame);
 	}
-	void DisplayTorus(Primitive::ShaderPrimitive* torus) {
-		DisplayTransformation(torus);
-		ImGui::DragFloat("Inner Radius", &(torus->values[1]), 0.01, 0, 5.0, "%.3f", 0);
+	void DisplayTorus(Primitive::ShaderPrimitive* torus, int frame) {
+		DisplayTransformation(torus, frame);
+		ImGui::KeyframeDragFloat("Inner Radius", frame, &(torus->values[1]), 0.01, 0, 5.0, "%.3f", 0);
 	}
-	void DisplayMandelbulb(Primitive::ShaderPrimitive* mandelbulb) {
-		DisplayTransformation(mandelbulb);
-		ImGui::DragFloat("Power", &(mandelbulb->values[0]), 0.01, 0, 40.0, "%.3f", 0);
+	void DisplayMandelbulb(Primitive::ShaderPrimitive* mandelbulb, int frame) {
+		DisplayTransformation(mandelbulb, frame);
+		ImGui::KeyframeDragFloat("Power", frame, &(mandelbulb->values[0]), 0.01, 0, 40.0, "%.3f", 0);
 	}
 	void DisplayModifier(Primitive::ShaderPrimitive* element, int index) {
 		auto clicked = ImGui::Button("Delete");
 		if (clicked) {
-			(*element).remove_modifier(index);
+			(*element).removeModifier(index);
 		}
 	}
 
-	void DisplayModifiers(Primitive::ShaderPrimitive* element, int index) {
+	void DisplayModifiers(Primitive::ShaderPrimitive* element, int index, int frame) {
 		if (index < element->mod_count) {
 			auto m = element->modifiers[index];
 
+			element->modifiers[index].setSelected(false);
 			if (m.modifier == Primitive::ModifierType::DISTORT) {
 				if (ImGui::TreeNode("Distort Modifier"))
 				{
-					float p3[3] = { (*element).modifiers[index].attribute0, (*element).modifiers[index].attribute1, (*element).modifiers[index].attribute2 };
-					auto changed = ImGui::DragFloat3("Offset", p3, 0.01, -500.0, 500.0, "%.3f", 0);
-					if (changed) {
-						(*element).modifiers[index].attribute0 = p3[0];
-						(*element).modifiers[index].attribute1 = p3[1];
-						(*element).modifiers[index].attribute2 = p3[2];
-					}
-					ImGui::DragFloat("Factor", &(*element).modifiers[index].attribute3, 0.01, 0.0, 4.0, "%.3f", 0);
-					ImGui::DragFloat("Frequency", &(*element).modifiers[index].attribute4, 0.01, 0.0, 4.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					AnimatedFloat* p3[3] = { &(*element).modifiers[index].attribute0, &(*element).modifiers[index].attribute1, &(*element).modifiers[index].attribute2 };
+					auto changed = ImGui::KeyframeDragFloat3("Offset", frame, p3, 0.01, -500.0, 500.0, "%.3f", 0);
+					
+					ImGui::KeyframeDragFloat("Factor", frame, &(*element).modifiers[index].attribute3, 0.01, 0.0, 4.0, "%.3f", 0);
+					ImGui::KeyframeDragFloat("Frequency", frame, &(*element).modifiers[index].attribute4, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -84,7 +68,8 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::TWIST) {
 				if (ImGui::TreeNode("Twist Modifier"))
 				{
-					ImGui::DragFloat("Power", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					ImGui::KeyframeDragFloat("Power", frame, &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -94,7 +79,8 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::BEND) {
 				if (ImGui::TreeNode("Bend Modifier"))
 				{
-					ImGui::DragFloat("Power", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					ImGui::KeyframeDragFloat("Power", frame, &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -104,7 +90,8 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::REPETITION) {
 				if (ImGui::TreeNode("Repetition Modifier"))
 				{
-					ImGui::DragFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					ImGui::KeyframeDragFloat("Repetition Period", frame, &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -114,15 +101,16 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::REPETITION_LIMITED) {
 				if (ImGui::TreeNode("Repetition Limited Modifier"))
 				{
-					ImGui::DragFloat("Repetition Period", &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					ImGui::KeyframeDragFloat("Repetition Period", frame, &(*element).modifiers[index].attribute0, 0.01, 0.0, 10.0, "%.3f", 0);
 
-					float p3[3] = { (*element).modifiers[index].attribute1, (*element).modifiers[index].attribute2, (*element).modifiers[index].attribute3 };
-					auto changed = ImGui::DragFloat3("Offset", p3, 0.01, 0.0, 20.0, "%.3f", 0);
-					if (changed) {
+					AnimatedFloat* p3[3] = { &(*element).modifiers[index].attribute1, &(*element).modifiers[index].attribute2, &(*element).modifiers[index].attribute3 };
+					auto changed = ImGui::KeyframeDragFloat3("Offset", frame, p3, 0.01, 0.0, 20.0, "%.3f", 0);
+					/*if (changed) {
 						(*element).modifiers[index].attribute1 = p3[0];
 						(*element).modifiers[index].attribute2 = p3[1];
 						(*element).modifiers[index].attribute3 = p3[2];
-					}
+					}*/
 
 					DisplayModifier(element, index);
 
@@ -132,7 +120,8 @@ namespace RMImGui {
 			else if (m.modifier == Primitive::ModifierType::ROUND) {
 				if (ImGui::TreeNode("Round Modifier"))
 				{
-					ImGui::DragFloat("Strength", &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
+					element->modifiers[index].setSelected(true);
+					ImGui::KeyframeDragFloat("Strength", frame, &(*element).modifiers[index].attribute0, 0.01, 0.0, 4.0, "%.3f", 0);
 
 					DisplayModifier(element, index);
 
@@ -144,17 +133,17 @@ namespace RMImGui {
 		else if (element->mod_count == index) {
 			if (ImGui::BeginCombo("##shading_mode", "Add Modifier")) {
 				if (ImGui::Selectable("Distort Modifier", true))
-					(*element).add_distort_modifier(glm::vec3(0.0), 0.0, 0.0);
+					(*element).addDistortModifier(glm::vec3(0.0), 0.0, 0.0);
 				if (ImGui::Selectable("Twist Modifier", false))
-					(*element).add_twist_modifier(0.0);
+					(*element).addTwistModifier(0.0);
 				if (ImGui::Selectable("Bend Modifier", false))
-					(*element).add_bend_modifier(0.0);
+					(*element).addBendModifier(0.0);
 				if (ImGui::Selectable("Repetition Modifier", false))
-					(*element).add_repetition_modifier(10.0);
+					(*element).addRepetitionModifier(10.0);
 				if (ImGui::Selectable("Repetition Limited Modifier", false))
-					(*element).add_repetition_limited_modifier(1.0, glm::vec3(1.0));
+					(*element).addRepetitionLimitedModifier(1.0, glm::vec3(1.0));
 				if (ImGui::Selectable("Round Modifier", false))
-					(*element).add_round_modifier(0.0);
+					(*element).addRoundModifier(0.0);
 
 				ImGui::EndCombo();
 			}
@@ -164,20 +153,20 @@ namespace RMImGui {
 	void DisplayElement(ImGuiData& data, int element) {
 		auto p = &data.primitives[element];
 		if (p->prim_type == 1) {
-			DisplaySphere(p);
+			DisplaySphere(p, data.timeline.frame);
 		}
 		if (p->prim_type == 2) {
-			DisplayTorus(p);
+			DisplayTorus(p, data.timeline.frame);
 		}
 		if (p->prim_type == 3) {
-			DisplayCube(p);
+			DisplayCube(p, data.timeline.frame);
 		}
 		if (p->prim_type == 4) {
-			DisplayMandelbulb(p);
+			DisplayMandelbulb(p, data.timeline.frame);
 		}
 
 		for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER; i++) {
-			DisplayModifiers(p, i);
+			DisplayModifiers(p, i, data.timeline.frame);
 		}
 
 		auto clicked = ImGui::Button("Delete");
@@ -237,26 +226,31 @@ namespace RMImGui {
 
 	void DisplayGroup(ImGuiData& data, int i) {
 		// For int
-		if (DisplayGroupObjectSelect(data, i, 0))
-			if (DisplayGroupObjectSelect(data, i, 1))
-				if (DisplayGroupObjectSelect(data, i, 2))
-					DisplayGroupObjectSelect(data, i, 3);
+		if (DisplayGroupObjectSelect(data, i, 0)) {
+			if (DisplayGroupObjectSelect(data, i, 1)) {
+				if (DisplayGroupObjectSelect(data, i, 2)) {
+					if(DisplayGroupObjectSelect(data, i, 3)) {
+					}
+				}
+			}
+		}
 
 		auto p = data.groupPrimitives[i];
 
 		if (p.modifier == Primitive::GroupModifierType::SMOOTH_INTERSECTION ||
 			p.modifier == Primitive::GroupModifierType::SMOOTH_SUBTRACTION ||
 			p.modifier == Primitive::GroupModifierType::SMOOTH_UNION) {
-			ImGui::DragFloat("Smoothing factor", &(data.groupPrimitives[i].primAttribute), 0.01, 0.0, 10.0, "%.3f", 0);
+			ImGui::KeyframeDragFloat("Smoothing factor", data.timeline.frame, &(data.groupPrimitives[i].primAttribute), 0.01, 0.0, 10.0, "%.3f", 0);
 		}
 
 		if (ImGui::Button("Delete")) {
-			data.remove_group_modifier(i);
+			data.removeGroupModifier(i);
 		}
 	}
 
 	void DisplayGroups(ImGuiData& data) {
 		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+			data.groupPrimitives[i].setSelected(false);
 			auto p = data.groupPrimitives[i];
 			if (p.modifier == 0) {
 				auto selected = "Modifier";
@@ -283,6 +277,7 @@ namespace RMImGui {
 			else {
 				if (ImGui::TreeNode(p.name().c_str()))
 				{
+					data.groupPrimitives[i].setSelected(true);
 					DisplayGroup(data, i);
 					ImGui::TreePop();
 				}
@@ -294,7 +289,6 @@ namespace RMImGui {
 	void DisplayObjects(ImGuiData& data) {
 		ImGui::BeginTabBar("##tabs");
 		
-
 		if (ImGui::BeginTabItem("Groups")) {
 			DisplayGroups(data);
 
@@ -337,13 +331,15 @@ namespace RMImGui {
 			{
 				int count = 0;
 				for (int i = 0; i < COUNT_PRIMITIVE; i++) {
+					data.primitives[i].setSelected(false);
 					auto p = data.primitives[i];
 					if (p.prim_type == 0) {
 						continue;
 					}
-					//std::cout << std::to_string(i) << p.name << std::endl;
+
 					if (ImGui::TreeNode(std::string(std::string(p.name) + "##" + std::to_string(count)).c_str()))
 					{
+						data.primitives[i].setSelected(true);
 						DisplayElement(data, i);
 						ImGui::TreePop();
 					}
@@ -378,17 +374,20 @@ namespace RMImGui {
 		}
 
 		if (ImGui::BeginTabItem("Camera")) {
-			float p3[3] = { data.cam_pos.x, data.cam_pos.y, data.cam_pos.z };
-			auto changed = ImGui::DragFloat3("Offset", p3, 0.01, -500.0, 500.0, "%.3f", 0);
-			if (changed) {
-				data.cam_pos.x = p3[0];
-				data.cam_pos.y = p3[1];
-				data.cam_pos.z = p3[2];
-			}
+			AnimatedFloat* p3[3] = { &data.cam_pos[0], &data.cam_pos[1], &data.cam_pos[2] };
+			ImGui::KeyframeDragFloat3("Position", data.timeline.frame, p3, 0.01, -500.0, 500.0, "%.3f", 0);
+
+			AnimatedFloat* p2[2] = { &data.cam_py[0], &data.cam_py[1] };
+			ImGui::KeyframeDragFloat2("Pitch/Yaw", data.timeline.frame, p2, 0.01, -500.0, 500.0, "%.3f", 0);
 
 			ImGui::Checkbox("Reposition Camera", &data.reposition_cam);
 
+			data.camSelected = true;
+
 			ImGui::EndTabItem();
+		}
+		else {
+			data.camSelected = false;
 		}
 		ImGui::EndTabBar();
 	}
@@ -426,15 +425,15 @@ namespace RMImGui {
 		// Timeline controls
 		ImGui::PushItemWidth(50);
 
-		ImGui::DragInt("Start", &data.timeline.min_frame);
+		ImGui::DragInt("Start", &data.timeline.min_frame, 1.0, 0, data.timeline.max_frame);
 		float controls_x = 70 + ImGui::CalcTextSize("Start").x;
 
 		ImGui::SameLine(controls_x);
-		ImGui::DragInt("End", &data.timeline.max_frame);
+		ImGui::DragInt("End", &data.timeline.max_frame, 1.0, data.timeline.min_frame, 100000);
 		controls_x += 70 + ImGui::CalcTextSize("End").x;
 
 		ImGui::SameLine(controls_x);
-		ImGui::DragInt("Frame", &data.timeline.frame);
+		ImGui::DragInt("Frame", &data.timeline.frame, 1.0f, data.timeline.min_frame, data.timeline.max_frame);
 		controls_x += 70 + ImGui::CalcTextSize("Frame").x;
 
 		ImGui::SameLine(controls_x); 
@@ -472,25 +471,24 @@ namespace RMImGui {
 
 		//ImGui::SameLine(controls_x); ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.pause), ImVec2(15.0, 15.0)); controls_x += 25;
 		//ImGui::SameLine(controls_x); ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.stop), ImVec2(15.0, 15.0)); controls_x += 25;
-
 	}
 
 	void DisplayTimeline(ImGuiData& data) {
-
-
 		bool open = false;
 		if (!ImGui::Begin("Timeline", &open))
 		{
 			ImGui::End();
 			return;
 		}
-
 		DisplayTimelineTopBar(data);
-		
 
+		auto animation_data = data.selectedAnimationData();
+		auto keyframes = animation_data.getKeyframes();
+
+		//std::cout << std::to_string(animation_data.selected_primitives.capacity()) << "   " << std::to_string(animation_data.group_primitivies.capacity()) << std::endl;
+		//std::cout << std::to_string(keyframes.capacity()) << std::endl;
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-		static float sz = 36.0f;
 		static float thickness = 4.0f;
 		static ImVec4 col = ImVec4(1.0f, 1.0f, 0.4f, 1.0f);
 
@@ -501,25 +499,33 @@ namespace RMImGui {
 		const ImU32 timeline_rect_strong = ImColor(ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
 		const ImU32 timeline_rect_accent = ImColor(ImVec4(0.4f, 0.3f, 0.2f, 1.0f));
 		const ImU32 timeline_rect_covers = ImColor(ImVec4(0.15f, 0.15f, 0.15f, 0.75f));
+		const ImU32 timeline_rect_keyframe = ImColor(ImVec4(0.15f, 0.15f, 0.4f, 0.75f));
 		const ImU32 text_strong = ImColor(ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
-
-
+		
 		// Timeline number bar
 		const float TIMELINE_NUMBER_BAR_SIZE = 20;
 		float timeline_step_width = 7.5;
+		float timeline_height = 100.0;
+
+		int frameOffset = -data.timeline.offset / timeline_step_width;
+		float posOffset = -data.timeline.offset;
+		x -= posOffset;
+
 		draw_list->AddRectFilled(ImVec2(p.x, p.y), ImVec2(p.x + s.x, y + TIMELINE_NUMBER_BAR_SIZE), timeline_rect_strong, 0.0f, ImDrawCornerFlags_All);
-		for (int i = 0; i < s.x / timeline_step_width; i += 10) {
+		for (int i = frameOffset; i < s.x / timeline_step_width + frameOffset; i += 1) {
+			if (i % 10 != 0)
+				continue;
 
 			std::string timeline_number = std::to_string(i);
 			auto text_size = ImGui::CalcTextSize(timeline_number.c_str()).x;
 
-			draw_list->AddText(ImVec2(x + i * timeline_step_width - text_size * .5 + 3, y + 2), text_strong, timeline_number.c_str());
+			draw_list->AddText(ImVec2(x + i * timeline_step_width - text_size * .5f + 3, y + 2), text_strong, timeline_number.c_str());
 		}
 
 		{
 			std::string timeline_number = std::to_string(data.timeline.frame);
 			auto text_size = ImGui::CalcTextSize(timeline_number.c_str()).x;
-			float x_start = x + data.timeline.frame * timeline_step_width - text_size * .5 + 3;
+			float x_start = x + data.timeline.frame * timeline_step_width - text_size * .5f + 3;
 			draw_list->AddRectFilled(ImVec2(x_start - 5, y), ImVec2(x_start + 5 + text_size, y + TIMELINE_NUMBER_BAR_SIZE), timeline_rect_accent, 15.0f, ImDrawCornerFlags_All);
 			draw_list->AddText(ImVec2(x_start, y + 2), text_strong, timeline_number.c_str());
 		}
@@ -528,19 +534,54 @@ namespace RMImGui {
 		y += TIMELINE_NUMBER_BAR_SIZE + 2;
 
 		// Timeline lines
-		for (int i = 0; i < s.x / timeline_step_width; i += 5) {
+		for (int i = frameOffset; i < s.x / timeline_step_width + frameOffset; i += 1) {
+			if (i % 5 != 0)
+				continue;
 			auto x_pos = x + i * timeline_step_width;
 			if (i % 10 == 0)
-				draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 2, y + sz), timeline_rect_strong, 0.0f, ImDrawCornerFlags_All);
+				draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 2, y + timeline_height), timeline_rect_strong, 0.0f, ImDrawCornerFlags_All);
 			else
-				draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 1, y + sz), timeline_rect_light, 0.0f, ImDrawCornerFlags_All);
+				draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 1, y + timeline_height), timeline_rect_light, 0.0f, ImDrawCornerFlags_All);
 		}
 
-		draw_list->AddRectFilled(ImVec2(x + data.timeline.frame * timeline_step_width, y), ImVec2(x + data.timeline.frame * timeline_step_width + 2, y + sz), timeline_rect_accent, 0.0f, ImDrawCornerFlags_All);
+		for (auto a : keyframes) {
+			auto x_pos = x + a * timeline_step_width;
+			draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 2, y + timeline_height), timeline_rect_keyframe, 0.0f, ImDrawCornerFlags_All);
+		}
+
+		draw_list->AddRectFilled(ImVec2(x + data.timeline.frame * timeline_step_width, y), ImVec2(x + data.timeline.frame * timeline_step_width + 2, y + timeline_height), timeline_rect_accent, 0.0f, ImDrawCornerFlags_All);
 
 		// Timeline covers
-		draw_list->AddRectFilled(ImVec2(p.x, y), ImVec2(x + data.timeline.min_frame * timeline_step_width + 2, y + sz), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
-		draw_list->AddRectFilled(ImVec2(p.x + data.timeline.max_frame * timeline_step_width, y), ImVec2(p.x + s.x, y + sz), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
+		draw_list->AddRectFilled(ImVec2(p.x, y), ImVec2(x + data.timeline.min_frame * timeline_step_width, y + timeline_height), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
+		draw_list->AddRectFilled(ImVec2(p.x + data.timeline.max_frame * timeline_step_width + data.timeline.offset, y), ImVec2(p.x + s.x, y + timeline_height), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
+
+		auto pos = ImGui::GetMousePos();
+		pos = ImVec2(pos.x - p.x, pos.y - p.y);
+
+
+		// Mouse events
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+			if (pos.y > TIMELINE_NUMBER_BAR_SIZE && pos.y < TIMELINE_NUMBER_BAR_SIZE + timeline_height && pos.x > 0 && pos.x < s.x) {
+				data.drag = DragStart::Timeline;
+			}
+			else if (pos.y > 0 && pos.y < TIMELINE_NUMBER_BAR_SIZE && pos.x > 0 && pos.x < s.x) {
+				data.drag = DragStart::TopBar;
+			}
+		}
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			data.drag = DragStart::None;
+		}
+
+		if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+			if (data.drag == DragStart::Timeline) {
+				auto d = ImGui::GetMouseDragDelta();
+				ImGui::ResetMouseDragDelta();
+				data.timeline.offset = std::min(data.timeline.offset + d.x, 0.0f);
+			}else if (data.drag == DragStart::TopBar) {
+				data.timeline.frame = std::round(pos.x / timeline_step_width);
+			}
+		}
 
 		ImGui::End();
 	}
