@@ -5,6 +5,8 @@
 #include "constants.h"
 #include "animator.h"
 #include <glm/glm.hpp> 
+#include <sstream>
+#include <glm/gtx/string_cast.hpp>
 
 namespace Primitive {
 
@@ -41,6 +43,12 @@ namespace Primitive {
 			position.getKeyframes(p_keyframes);
 			rotation.getKeyframes(p_keyframes);
 			scale.getKeyframes(p_keyframes);
+		}
+
+		std::string toString() {
+			std::stringstream ss;
+			ss << "{position: " + position.toString() << ", rotation: " + rotation.toString() << ", scale: " + scale.toString() << ", matrix: " << glm::to_string(matrix) << "}";
+			return ss.str();
 		}
 	};
 

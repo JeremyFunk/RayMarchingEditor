@@ -2,11 +2,12 @@
 #include <vector>
 #include <algorithm>
 #include <glm/glm.hpp>
- 
+#include <sstream>
 struct FloatKeyframe {
     int frame;
     float value;
     FloatKeyframe(int frame, float value): frame(frame), value(value) {}
+    
 };
 struct less_than_key
 {
@@ -23,6 +24,7 @@ struct AnimatedFloat {
     AnimatedFloat(float value) : value(value) {}
     AnimatedFloat() : value(0.0) {}
 
+public:
     void getKeyframes(std::vector<int>* p_keyframes) {
         for (auto f : keyframes) {
             p_keyframes->push_back(f.frame);
@@ -37,6 +39,10 @@ struct AnimatedFloat {
             }
         }
         keyframes.push_back(FloatKeyframe(frame, value));
+
+        std::sort(keyframes.begin(), keyframes.end(), [](FloatKeyframe a, FloatKeyframe b) {
+            return a.frame < b.frame;
+        });
     }
 
     bool ContainsKeyframe(int frame) {
@@ -89,6 +95,12 @@ struct AnimatedFloat {
         float factor = (frame - min.frame) / frameDiff;
         value = min.value * (1.0f - factor) + max.value * factor;
     }
+
+    std::string toString() {
+        std::stringstream ss;
+        ss << "{value: " << value << "}";
+        return ss.str();
+    }
 };
 
 
@@ -119,6 +131,17 @@ struct AnimatedFloatVec3 {
         values[1] = vec.y;
         values[2] = vec.z;
     }
+    AnimatedFloatVec3(AnimatedFloat f1, AnimatedFloat f2, AnimatedFloat f3) {
+        values[0] = f1;
+        values[1] = f2;
+        values[2] = f3;
+    }
+
+    std::string toString() {
+        std::stringstream ss;
+        ss << "{x: " << values[0].toString() << "y: " << values[1].toString() << "z: " << values[2].toString() << "}";
+        return ss.str();
+    }
 };
 
 
@@ -143,6 +166,16 @@ struct AnimatedFloatVec2 {
     AnimatedFloatVec2(glm::vec2 vec) {
         values[0] = vec.x;
         values[1] = vec.y;
+    }
+    AnimatedFloatVec2(AnimatedFloat f1, AnimatedFloat f2) {
+        values[0] = f1;
+        values[1] = f2;
+    }
+
+    std::string toString() {
+        std::stringstream ss;
+        ss << "{x: " << values[0].toString() << "y: " << values[1].toString() << "}";
+        return ss.str();
     }
 };
 

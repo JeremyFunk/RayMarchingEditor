@@ -401,13 +401,22 @@ namespace RMImGui {
 					auto content = RMIO::Load(file.path);
 					auto im = Scene::convertScene(Scene::toScene(content));
 					for(int i = 0; i < COUNT_PRIMITIVE; i++){
+						auto trans = data.primitives[i].transformation;
+						
 						data.primitives[i] = im.primitives[i];
+						//data.primitives[i].transformation = trans;
+
+						//std::cout << trans.toString() << std::endl;
+						//std::cout << data.primitives[i].transformation.position[0].keyframes.capacity() << std::endl;
+
+						Primitive::updateTransformation(&data.primitives[i]);
+						
 					}
 					for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
 						data.groupPrimitives[i] = im.groupPrimitives[i];
 					}
 					data.cam_pos = im.cam_pos;
-					data.cam_rot = im.cam_rot;
+					data.cam_py = im.cam_py;
 				}
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S") || ImGui::MenuItem("Save As", "Ctrl+Shift+S")) {

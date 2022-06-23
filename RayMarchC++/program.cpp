@@ -155,8 +155,11 @@ void update_render_camera() {
 	float cosYaw = cos(yawRadians);
 
  	data.cam_rot = glm::normalize(vec3(cosPitch * sinYaw, -sinPitch, cosPitch * cosYaw));
-	data.cam_pos = camera.Position;
-	data.cam_py = vec2(camera.Pitch, camera.Yaw);
+	data.cam_pos[0].value = camera.Position[0];
+	data.cam_pos[1].value = camera.Position[1];
+	data.cam_pos[2].value = camera.Position[2];
+	data.cam_py[0].value = camera.Pitch;
+	data.cam_py[1].value = camera.Yaw;
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -260,7 +263,7 @@ int main()
 	data.addPrimitive(prim2);
 
 	Primitive::ShaderGroupPrimitive group = Primitive::opSubtractionSmooth(1, 0, 0.2);
-	data.groupPrimitives[0] = group;
+	//data.groupPrimitives[0] = group;
 	data.cam_pos = vec3(0.0, 0.0, 4.0);
 	data.cam_rot = vec3(-1.0, 0.0, 0.0);
 
@@ -317,15 +320,16 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		if (cam_mode == 1) {
-			data.cam_py = vec2(camera.Pitch, camera.Yaw);
+			//data.cam_py = vec2(camera.Pitch, camera.Yaw);
+			//data.cam_pos = camera.Position;
 		}
 		else {
-			camera.Pitch = data.cam_py[0].value;
+			/*camera.Pitch = data.cam_py[0].value;
 			camera.Yaw = data.cam_py[1].value;
 
 			camera.Position = data.cam_pos.toVec();
 
-			camera.updateCameraVectors();
+			camera.updateCameraVectors();*/
 		}
 		
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -339,12 +343,6 @@ int main()
 		glfwGetCursorPos(window, &xpos, &ypos);
 		
 		auto view = camera.GetViewMatrix();
-		if (data.reposition_cam && enteredCam) {
-			update_render_camera();
-		}
-		else if (enteredCam) {
-			update_camera();
-		}
 		bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
 		glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
@@ -411,6 +409,12 @@ int main()
 			data.animate(data.timeline.frame);
 		}
 
+		if (data.reposition_cam && enteredCam) {
+			update_render_camera();
+		}
+		else if (enteredCam) {
+			update_camera();
+		}
 		lastTimelineFrame = data.timeline.frame;
 
 	} // Check if the ESC key was pressed or the window was closed
