@@ -30,6 +30,9 @@ public:
             p_keyframes->push_back(f.frame);
         }
     }
+    bool ContainsKeyframes() {
+        return !keyframes.empty();
+    }
 
     void AddKeyframe(int frame, float value) {
         for (int i = 0; i < keyframes.capacity(); i++) {
@@ -118,6 +121,9 @@ struct AnimatedFloatVec3 {
         values[0].getKeyframes(p_keyframes);
         values[1].getKeyframes(p_keyframes);
         values[2].getKeyframes(p_keyframes);
+    }
+    bool containsKeyframes() {
+        return values[0].ContainsKeyframes() || values[1].ContainsKeyframes() || values[2].ContainsKeyframes();
     }
     glm::vec3 toVec() {
         return glm::vec3(values[0].value, values[1].value, values[2].value);

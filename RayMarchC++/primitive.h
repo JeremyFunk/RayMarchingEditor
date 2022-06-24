@@ -45,6 +45,10 @@ namespace Primitive {
 			scale.getKeyframes(p_keyframes);
 		}
 
+		bool containsKeyframes() {
+			return position.containsKeyframes() || rotation.containsKeyframes() || scale.containsKeyframes();
+		}
+
 		std::string toString() {
 			std::stringstream ss;
 			ss << "{position: " + position.toString() << ", rotation: " + rotation.toString() << ", scale: " + scale.toString() << ", matrix: " << glm::to_string(matrix) << "}";

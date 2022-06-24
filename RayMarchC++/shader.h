@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 #include <vector>
@@ -59,4 +58,3 @@ namespace Shader {
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
 	void PrepareShader(const Primitive::ShaderPrimitive primitives[], const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms);
 }
-#endif

@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 
 //Guides: https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/shell/common-file-dialog.md#sample-usage

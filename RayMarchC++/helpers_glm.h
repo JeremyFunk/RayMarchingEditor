@@ -1,6 +1,4 @@
-#ifndef HELPERS_GLM_H
-#define HELPERS_GLM_H
-
+#pragma once
 #include <glm/glm.hpp>
 #include <GL/glew.h>
 
@@ -9,5 +7,3 @@ glm::mat3x3 rotationMatrix(glm::vec3 rotation);
 glm::mat3x3 transformationMatrix(glm::vec3 rotation, glm::vec3 scale);
 glm::vec3 sphericalCoords(glm::vec3 cartesian);
 glm::vec3 cartesianCoords(glm::vec3 spherical);
-
-#endif HELPERS_GLM_H

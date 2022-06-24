@@ -152,6 +152,7 @@
     <ClCompile Include="free_cam.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="helpers_glm.cpp" />
+    <ClCompile Include="imgui_animation.cpp" />
     <ClCompile Include="imgui_handler.cpp" />
     <ClCompile Include="primitive.cpp" />
     <ClCompile Include="program.cpp" />
@@ -176,6 +177,8 @@
     <ClInclude Include="data.h" />
     <ClInclude Include="free_cam.h" />
     <ClInclude Include="helpers_glm.h" />
+    <ClInclude Include="imgui_animation.h" />
+    <ClInclude Include="imgui_data.h" />
     <ClInclude Include="imgui_handler.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="primitive.h" />
