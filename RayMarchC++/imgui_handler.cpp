@@ -430,7 +430,8 @@ namespace RMImGui {
 			ImGui::EndMenu();
 		}
 	}
-
+	static ImVec2 values[] = { ImVec2(0.0f, 0.0f), ImVec2(25.0, 25.0), ImVec2(75.0, 75.0), ImVec2(100.0f, 100.0f) };
+	static int new_count = 0;
 	void RenderImGui(ImGuiData& data) {
 		DisplayTimeline(data);
 
@@ -446,6 +447,69 @@ namespace RMImGui {
 		DisplayEngine(data);
 		ImGui::End();
 
+		ImGui::Begin("Test");
+		
+
+
+		/*if (ImGui::CurveEditor("Das editor", values, 2, ImVec2(600, 200), 0, &new_count))
+		{
+			std::cout << values[0] << " " << values[1] << " " << values[2] << " " << values[3] << std::endl;
+		}*/
+		ImDrawList* draw_list = ImGui::GetWindowDrawList();
+		const ImU32 bez_curve_color = ImColor(ImVec4(0.6f, 0.6f, 0.4f, 0.75f));
+		const ImU32 bez_point_color = ImColor(ImVec4(0.8f, 0.8f, 0.6f, 0.75f));
+
+		const ImVec2 p = ImGui::GetCursorScreenPos();
+		float circle_size = 4.0;
+		float click_dist = 8.0;
+
+		float padding = 5;
+		float min_x = p.x + padding;
+		float min_y = p.y + padding;
+
+		ImVec2 transformed[IM_ARRAYSIZE(values)] = {};
+		for (int i = 0; i < IM_ARRAYSIZE(values); i++) {
+			transformed[i] = ImVec2(values[i].x + min_x, values[i].y + min_y);	
+		}
+		for (int i = 0; i < IM_ARRAYSIZE(values); i++) {
+			draw_list->AddCircleFilled(transformed[i], circle_size, bez_point_color);
+
+			if (i % 2 == 0) {
+				draw_list->AddLine(transformed[i], transformed[i + 1], bez_curve_color, 1.0f);
+			}
+		}
+
+
+		auto mouse_pos = ImGui::GetMousePos();
+		auto transformed_pos = ImVec2(mouse_pos.x - min_x, mouse_pos.y - min_y);
+
+		// Mouse events
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+			std::cout << mouse_pos.x << " " << mouse_pos.y << std::endl;
+			for (int i = 0; i < IM_ARRAYSIZE(values); i++) {
+				auto k = transformed[i];
+				if (mouse_pos.y > k.y - click_dist / 2 && mouse_pos.y < k.y + click_dist / 2 && mouse_pos.x > k.x - click_dist / 2 && mouse_pos.x < k.x + click_dist / 2) {
+					data.drag = DragStart::BezierPoint;
+					data.dragData = i;
+				}
+			}
+		}
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+			data.drag = DragStart::None;
+			data.dragData = -1;
+		}
+
+		if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+			if (data.drag == DragStart::BezierPoint) {
+				auto k = &values[data.dragData];
+				k->x = std::max(0.0f, transformed_pos.x);
+				k->y = std::max(0.0f, transformed_pos.y);
+			}
+		}
+		
+		draw_list->AddBezierCubic(transformed[0], transformed[1], transformed[2], transformed[3], bez_curve_color, 1.0);
+		ImGui::End();
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}

@@ -61,7 +61,7 @@ namespace Scene {
     }
 
     void animatedFloatToJson(AnimatedFloat f, json& j) {
-        for (int i = 0; i < f.keyframes.capacity(); i++) {
+        for (int i = 0; i < f.keyframes.size(); i++) {
             j["keyframes"][i]["value"] = f.keyframes[i].value;
             j["keyframes"][i]["frame"] = f.keyframes[i].frame;
         }

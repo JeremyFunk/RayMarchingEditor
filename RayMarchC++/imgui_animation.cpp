@@ -10,6 +10,7 @@
 #include "imgui_animation.h"
 namespace RMImGui {
 	const ImU32 timeline_rect_bar = ImColor(ImVec4(0.6f, 0.6f, 0.4f, 0.75f));
+	const ImU32 timeline_rect_frame_bar = ImColor(ImVec4(0.9f, 0.9f, 0.6f, 0.8f));
 	void DisplayTimelineTopBar(ImGuiData& data) {
 		// Timeline controls
 		ImGui::PushItemWidth(50);
@@ -97,26 +98,35 @@ namespace RMImGui {
 
 	static ImVec2 last_mouse_pos = ImVec2(FLT_MIN, FLT_MIN);
 
-	void DisplayDetailedKeyframe(AnimatedFloat& f, const char* name, ImDrawList* draw_list, float* height, float scale, float display_height, float px, float py) {
-		if (ImGui::TreeNode(name)) {
-			draw_list->AddRectFilled(ImVec2(px, py + *height), ImVec2(px + 100.0, py + *height + display_height), timeline_rect_bar, 0.0f, ImDrawCornerFlags_All);
+	bool DisplayTreeNode(const char* label, float* height, float scale) {
+		*height += scale;
+		return ImGui::TreeNode(label);
+	}
+
+	void DisplayDetailedKeyframe(AnimatedFloat& f, const char* name, ImDrawList* draw_list, float* height, float scale, float display_height, float px, float py, float frame_width) {
+		if (DisplayTreeNode(name, height, scale)) {
+			int first = f.firstFrame();
+			int last = f.lastFrame();
+			draw_list->AddRectFilled(ImVec2(px + first * frame_width, py + *height), ImVec2(px + last * frame_width + 2, py + *height + display_height), timeline_rect_bar, 0.0f, ImDrawCornerFlags_All);
+
+			for (auto k : f.keyframes) {
+				draw_list->AddRectFilled(ImVec2(px + k.frame * frame_width + 2, py + *height), ImVec2(px + k.frame * frame_width + 4, py + *height + display_height), timeline_rect_frame_bar, 0.0f, ImDrawCornerFlags_All);
+			}
 
 			ImGui::TreePop();
 		}
-		*height += scale;
 	}
 
-	void DisplayDetailedVector3(AnimatedFloatVec3& vec, const char* name, ImDrawList* draw_list, float* height, float scale, float display_height, float px, float py) {
-		if (ImGui::TreeNode(name)) {
-			*height += scale;
+	void DisplayDetailedVector3(AnimatedFloatVec3& vec, const char* name, ImDrawList* draw_list, float* height, float scale, float display_height, float px, float py, float frame_width) {
+		if (DisplayTreeNode(name, height, scale)) {
 			if (vec[0].ContainsKeyframes()) {
-				DisplayDetailedKeyframe(vec[0], "X", draw_list, height, scale, display_height, px, py);
+				DisplayDetailedKeyframe(vec[0], "X", draw_list, height, scale, display_height, px, py, frame_width);
 			}
 			if (vec[1].ContainsKeyframes()) {
-				DisplayDetailedKeyframe(vec[1], "Y", draw_list, height, scale, display_height, px, py);
+				DisplayDetailedKeyframe(vec[1], "Y", draw_list, height, scale, display_height, px, py, frame_width);
 			}
 			if (vec[2].ContainsKeyframes()) {
-				DisplayDetailedKeyframe(vec[2], "Z", draw_list, height, scale, display_height, px, py);
+				DisplayDetailedKeyframe(vec[2], "Z", draw_list, height, scale, display_height, px, py, frame_width);
 			}
 
 			ImGui::TreePop();
@@ -218,16 +228,6 @@ namespace RMImGui {
 			draw_list->AddRectFilled(ImVec2(timeline_frame_x, y), ImVec2(timeline_frame_x + 2, y + timeline_height), timeline_rect_accent, 0.0f, ImDrawCornerFlags_All);
 		}
 
-		if (data.timeline.display == TimelineDisplay::Detailed) {
-			for (auto a : keyframes) {
-				auto x_pos = x + a * timeline_step_width;
-				if (x_pos > min_x) {
-					draw_list->AddRectFilled(ImVec2(x_pos, y), ImVec2(x_pos + 2, y + timeline_height), timeline_rect_keyframe, 0.0f, ImDrawCornerFlags_All);
-				}
-			}
-		}
-
-
 		// Timeline covers
 		draw_list->AddRectFilled(ImVec2(min_x, y), ImVec2(std::max(min_x, x + data.timeline.min_frame * timeline_step_width), y + timeline_height), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
 		draw_list->AddRectFilled(ImVec2(std::max(min_x, min_x + data.timeline.max_frame * timeline_step_width + data.timeline.offset), y), ImVec2(std::max(min_x, p.x + s.x), y + timeline_height), timeline_rect_covers, 0.0f, ImDrawCornerFlags_All);
@@ -242,24 +242,21 @@ namespace RMImGui {
 			
 			float display_height = 14.0;
 			float scale = 17.0;
-			float height = 0.0;
+			float height = -scale;
 
-			if (ImGui::TreeNode("Objects"))
+			if (DisplayTreeNode("Objects", &height, scale))
 			{
-				height += scale;
 				for (auto o : data.primitives) {
-					if (o.prim_type != 0 && ImGui::TreeNode(o.name.c_str()))
+					if (o.prim_type != 0 && DisplayTreeNode(o.name.c_str(), &height, scale))
 					{
-						height += scale;
-						if (o.transformation.containsKeyframes() && ImGui::TreeNode("Transformation")) {
-							height += scale;
+						if (o.transformation.containsKeyframes() && DisplayTreeNode("Transformation", &height, scale)) {
 							if (o.transformation.containsKeyframes()) {
-								if(o.transformation.position.containsKeyframes())
-									DisplayDetailedVector3(o.transformation.position, "Position", draw_list, &height, scale, display_height, min_x, y);
-								if (o.transformation.rotation.containsKeyframes())
-									DisplayDetailedVector3(o.transformation.rotation, "Rotation", draw_list, &height, scale, display_height, min_x, y);
-								if (o.transformation.scale.containsKeyframes())
-									DisplayDetailedVector3(o.transformation.scale, "Scale", draw_list, &height, scale, display_height, min_x, y);
+								if (o.transformation.position.containsKeyframes())
+									DisplayDetailedVector3(o.transformation.position, "Position", draw_list, &height, scale, display_height, min_x, y, timeline_step_width);
+									if (o.transformation.rotation.containsKeyframes())
+										DisplayDetailedVector3(o.transformation.rotation, "Rotation", draw_list, &height, scale, display_height, min_x, y, timeline_step_width);
+									if (o.transformation.scale.containsKeyframes())
+										DisplayDetailedVector3(o.transformation.scale, "Scale", draw_list, &height, scale, display_height, min_x, y, timeline_step_width);
 							}
 							ImGui::TreePop();
 						}

@@ -25,6 +25,20 @@ struct AnimatedFloat {
     AnimatedFloat() : value(0.0) {}
 
 public:
+    int firstFrame() {
+        if (keyframes.size() == 0) {
+            return 0;
+        }
+        return keyframes[0].frame;
+    }
+
+    int lastFrame() {
+        if (keyframes.size() == 0) {
+            return 0;
+        }
+        return keyframes[keyframes.size() - 1].frame;
+    }
+
     void getKeyframes(std::vector<int>* p_keyframes) {
         for (auto f : keyframes) {
             p_keyframes->push_back(f.frame);
@@ -35,7 +49,7 @@ public:
     }
 
     void AddKeyframe(int frame, float value) {
-        for (int i = 0; i < keyframes.capacity(); i++) {
+        for (int i = 0; i < keyframes.size(); i++) {
             if (keyframes[i].frame == frame) {
                 keyframes[i].value = value;
                 return;
@@ -49,7 +63,7 @@ public:
     }
 
     bool ContainsKeyframe(int frame) {
-        for (int i = 0; i < keyframes.capacity(); i++) {
+        for (int i = 0; i < keyframes.size(); i++) {
             if (keyframes[i].frame == frame) {
                 return true;
             }
@@ -58,21 +72,21 @@ public:
     }
 
     void Recalculate(int frame) {
-        if (keyframes.capacity() == 0)
+        if (keyframes.size() == 0)
             return;
-        if (keyframes.capacity() == 1)
+        if (keyframes.size() == 1)
         {
             value = keyframes[0].value;
             return;
         }
-        for (int i = 0; i < keyframes.capacity(); i++) {
+        for (int i = 0; i < keyframes.size(); i++) {
             if (keyframes[i].frame == frame) {
                 value = keyframes[i].value;
                 return;
             }
         }
 
-        FloatKeyframe min = keyframes[0], max = keyframes[keyframes.capacity()-1];
+        FloatKeyframe min = keyframes[0], max = keyframes[keyframes.size()-1];
 
         if (min.frame > frame) {
             value = min.value;
@@ -84,7 +98,7 @@ public:
             return;
         }
 
-        for (int i = 0; i < keyframes.capacity(); i++) {
+        for (int i = 0; i < keyframes.size(); i++) {
             if (keyframes[i].frame < frame) {
                 min = keyframes[i];
             }

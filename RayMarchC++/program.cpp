@@ -1,4 +1,11 @@
 // Include standard headers
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+#include <cstdlib>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -402,6 +409,7 @@ int main()
 
 		// Swap buffers
 		glfwSwapBuffers(window);
+		Sleep(1);
 		glfwPollEvents();
 
 		if (lastTimelineFrame != data.timeline.frame) {
