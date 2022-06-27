@@ -45,6 +45,32 @@ namespace Primitive {
 			scale.getKeyframes(p_keyframes);
 		}
 
+		int firstFrame() {
+			int min = 100000;
+			if (position.containsKeyframes()) {
+				min = position.firstFrame();
+			}if (rotation.containsKeyframes()) {
+				min = std::min(min, rotation.firstFrame());
+			}if (scale.containsKeyframes()) {
+				min = std::min(min, scale.firstFrame());
+			}
+			return min;
+		}
+
+		int lastFrame() {
+			int max = -1;
+			if (position.containsKeyframes()) {
+				max = position.lastFrame();
+			}
+			if (rotation.containsKeyframes()) {
+				max = std::max(max, rotation.lastFrame());
+			}
+			if (scale.containsKeyframes()) {
+				max = std::max(max, scale.lastFrame());
+			}
+			return max;
+		}
+
 		bool containsKeyframes() {
 			return position.containsKeyframes() || rotation.containsKeyframes() || scale.containsKeyframes();
 		}

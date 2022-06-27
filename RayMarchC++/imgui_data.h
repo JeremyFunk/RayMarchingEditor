@@ -102,7 +102,7 @@ namespace RMImGui {
     };
 
     enum class DragStart {
-        None, TopBar, Timeline, BezierPoint
+        None, TopBar, Timeline, BezierPoint, KeyframeBar, KeyframeBarFrame
     };
 
     struct ImGuiData {
@@ -114,7 +114,8 @@ namespace RMImGui {
         AnimatedFloatVec2 cam_py;
         bool reposition_cam = false, camSelected = false;
         DragStart drag;
-        int dragData;
+        int dragId, dragSubId;
+        float dragData;
         Textures textures;
         TimelineData timeline;
 

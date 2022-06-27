@@ -3,11 +3,15 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <sstream>
+
+struct KeyframeInterpolation {
+    glm::vec2 p1;
+    glm::vec2 p2;
+};
 struct FloatKeyframe {
     int frame;
     float value;
     FloatKeyframe(int frame, float value): frame(frame), value(value) {}
-    
 };
 struct less_than_key
 {
@@ -17,12 +21,18 @@ struct less_than_key
     }
 };
 
+
 struct AnimatedFloat {
     float value;
     std::vector<FloatKeyframe> keyframes;
+    std::vector<KeyframeInterpolation> interpolation;
 
-    AnimatedFloat(float value) : value(value) {}
-    AnimatedFloat() : value(0.0) {}
+    AnimatedFloat(float value) : value(value) {
+        keyframes = std::vector<FloatKeyframe>();
+    }
+    AnimatedFloat() : value(0.0) {
+        keyframes = std::vector<FloatKeyframe>();
+    }
 
 public:
     int firstFrame() {
@@ -30,6 +40,22 @@ public:
             return 0;
         }
         return keyframes[0].frame;
+    }
+
+    int CanFrameMove(int frame_count)
+    {
+        for (int i = 0; i < keyframes.size(); i++) {
+            if (keyframes[i].frame + frame_count < 0) {
+                return -keyframes[i].frame;
+            }
+        }
+        return frame_count;
+    }
+    void FrameMove(int frame_count)
+    {
+        for (int i = 0; i < keyframes.size(); i++) {
+            keyframes[i].frame += frame_count;
+        }
     }
 
     int lastFrame() {
@@ -143,6 +169,34 @@ struct AnimatedFloatVec3 {
         return glm::vec3(values[0].value, values[1].value, values[2].value);
     }
 
+    int firstFrame() {
+        int min = 10000;
+        if (values[0].ContainsKeyframes()) {
+            min = values[0].firstFrame();
+        }
+        if (values[1].ContainsKeyframes()) {
+            min = std::min(min, values[1].firstFrame());
+        }
+        if (values[2].ContainsKeyframes()) {
+            min = std::min(min, values[2].firstFrame());
+        }
+        return min;
+    }
+
+    int lastFrame() {
+        int max = -1;
+        if (values[0].ContainsKeyframes()) {
+            max = values[0].lastFrame();
+        }
+        if (values[1].ContainsKeyframes()) {
+            max = std::max(max, values[1].lastFrame());
+        }
+        if (values[2].ContainsKeyframes()) {
+            max = std::max(max, values[2].lastFrame());
+        }
+        return max;
+    }
+    
     AnimatedFloatVec3() {
 
     }

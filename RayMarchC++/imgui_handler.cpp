@@ -430,7 +430,7 @@ namespace RMImGui {
 			ImGui::EndMenu();
 		}
 	}
-	static ImVec2 values[] = { ImVec2(0.0f, 0.0f), ImVec2(25.0, 25.0), ImVec2(75.0, 75.0), ImVec2(100.0f, 100.0f) };
+	static ImVec2 values[] = { ImVec2(0.0f, 0.0f), ImVec2(0.0f, 0.0f), ImVec2(100.0f, 100.0f), ImVec2(100.0f, 100.0f) };
 	static int new_count = 0;
 	void RenderImGui(ImGuiData& data) {
 		DisplayTimeline(data);
@@ -486,23 +486,23 @@ namespace RMImGui {
 		// Mouse events
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 			std::cout << mouse_pos.x << " " << mouse_pos.y << std::endl;
-			for (int i = 0; i < IM_ARRAYSIZE(values); i++) {
+			for (int i = 1; i <= 2; i+=1) {
 				auto k = transformed[i];
 				if (mouse_pos.y > k.y - click_dist / 2 && mouse_pos.y < k.y + click_dist / 2 && mouse_pos.x > k.x - click_dist / 2 && mouse_pos.x < k.x + click_dist / 2) {
 					data.drag = DragStart::BezierPoint;
-					data.dragData = i;
+					data.dragId = i;
 				}
 			}
 		}
 
 		if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
 			data.drag = DragStart::None;
-			data.dragData = -1;
+			data.dragId = -1;
 		}
 
 		if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
 			if (data.drag == DragStart::BezierPoint) {
-				auto k = &values[data.dragData];
+				auto k = &values[data.dragId];
 				k->x = std::max(0.0f, transformed_pos.x);
 				k->y = std::max(0.0f, transformed_pos.y);
 			}
