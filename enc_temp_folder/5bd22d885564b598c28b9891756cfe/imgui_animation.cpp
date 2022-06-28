@@ -277,7 +277,7 @@ namespace RMImGui {
 				auto in_x = std::min(new_x, 0.0f);
 
 				if (data.dragSubId != 0) {
-					in_x = std::max(float(window->f->keyframes[data.dragSubId - 1].frame), in_x);
+					in_x = std::max(values[data.dragSubId - 1].p.x, in_x);
 				}
 
 				window->f->keyframes[data.dragSubId].inter_x_in = new_x;
@@ -287,7 +287,7 @@ namespace RMImGui {
 				auto out_x = std::max(new_x, 0.0f);
 
 				if (data.dragSubId != values.size() - 1) {
-					out_x = std::min(float(window->f->keyframes[data.dragSubId + 1].frame), out_x);
+					out_x = std::min(values[data.dragSubId + 1].p.x, out_x);
 				}
 				window->f->keyframes[data.dragSubId].inter_x_out = out_x;
 				window->f->keyframes[data.dragSubId].inter_y_out = new_y;

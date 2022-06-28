@@ -3,15 +3,15 @@
 #include <algorithm>
 #include <glm/glm.hpp>
 #include <sstream>
+#include <iostream>
 
-struct KeyframeInterpolation {
-    glm::vec2 p1;
-    glm::vec2 p2;
-};
 struct FloatKeyframe {
     int frame;
     float value;
-    FloatKeyframe(int frame, float value): frame(frame), value(value) {}
+
+    // Bezier interpolation data
+    float inter_x_in, inter_y_in, inter_x_out, inter_y_out;
+    FloatKeyframe(int frame, float value): frame(frame), value(value), inter_x_in(0), inter_x_out(0), inter_y_in(0), inter_y_out(0) {}
 };
 struct less_than_key
 {
@@ -25,7 +25,6 @@ struct less_than_key
 struct AnimatedFloat {
     float value;
     std::vector<FloatKeyframe> keyframes;
-    std::vector<KeyframeInterpolation> interpolation;
 
     AnimatedFloat(float value) : value(value) {
         keyframes = std::vector<FloatKeyframe>();
@@ -51,10 +50,37 @@ public:
         }
         return frame_count;
     }
-    void FrameMove(int frame_count)
+    void FrameMoves(int frame_count)
     {
         for (int i = 0; i < keyframes.size(); i++) {
             keyframes[i].frame += frame_count;
+        }
+        std::sort(keyframes.begin(), keyframes.end(), [](FloatKeyframe a, FloatKeyframe b) {
+            return a.frame < b.frame;
+        });
+    }
+    void FrameMove(int frame, int frame_count, int* swap)
+    {
+        *swap = -1;
+        for (int i = 0; i < keyframes.size(); i++) {
+            if (i != frame && keyframes[i].frame == keyframes[frame].frame + frame_count) {
+                *swap = i;
+                break;
+            }
+        }
+        if (*swap != -1) {
+            keyframes[frame].frame += frame_count;
+            if(frame_count < 0)
+                keyframes[*swap].frame += 1;
+            else
+                keyframes[*swap].frame -= 1;
+
+            std::sort(keyframes.begin(), keyframes.end(), [](FloatKeyframe a, FloatKeyframe b) {
+                return a.frame < b.frame;
+            });
+        }
+        else {
+            keyframes[frame].frame += frame_count;
         }
     }
 

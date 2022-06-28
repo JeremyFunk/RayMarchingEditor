@@ -105,6 +105,17 @@ namespace RMImGui {
         None, TopBar, Timeline, BezierPoint, KeyframeBar, KeyframeBarFrame
     };
 
+    struct BezierAnimationWindow {
+        AnimatedFloat* f;
+        std::string name;
+        BezierAnimationWindow(AnimatedFloat* f, std::string name): f(f), name(name) {
+
+        }
+        friend bool operator==(const BezierAnimationWindow& a1, const BezierAnimationWindow& a2) {
+            return a1.f == a2.f;
+        }
+    };
+
     struct ImGuiData {
         int* shading_mode;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
@@ -113,8 +124,9 @@ namespace RMImGui {
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py;
         bool reposition_cam = false, camSelected = false;
+        std::vector<BezierAnimationWindow> bezier_animation_windows = std::vector<BezierAnimationWindow>();
         DragStart drag;
-        int dragId, dragSubId;
+        int dragId, dragSubId, dragSubSubId;
         float dragData;
         Textures textures;
         TimelineData timeline;

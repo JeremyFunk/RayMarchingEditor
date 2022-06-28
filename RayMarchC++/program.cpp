@@ -148,7 +148,6 @@ void update_camera() {
 
 	camera.Yaw = data.cam_py[1].value;
 	camera.Pitch = data.cam_py[0].value;
-	std::cout << camera.Yaw << std::endl;
 	camera.updateCameraVectors();
 }
 
