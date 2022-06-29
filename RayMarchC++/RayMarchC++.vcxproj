@@ -141,13 +141,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_demo.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_draw.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_glfw.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_tables.cpp" />
-    <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\imgui-docking\imgui\imgui_widgets.cpp" />
     <ClCompile Include="arcball.cpp" />
     <ClCompile Include="free_cam.cpp" />
     <ClCompile Include="helpers.cpp" />
@@ -161,15 +161,15 @@
     <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imconfig.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_glfw.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3_loader.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_internal.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_rectpack.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_textedit.h" />
-    <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_truetype.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imconfig.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imgui.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\imgui-docking\imgui\imstb_truetype.h" />
     <ClInclude Include="animator.h" />
     <ClInclude Include="arcball.h" />
     <ClInclude Include="constants.h" />

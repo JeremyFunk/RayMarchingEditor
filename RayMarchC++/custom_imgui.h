@@ -22,6 +22,18 @@ namespace ImGui {
             style->Colors[ImGuiCol_FrameBgActive] = b;
             style->Colors[ImGuiCol_FrameBgHovered] = c;
         }
+        else if (v->ContainsKeyframes()) {
+            auto a = style->Colors[ImGuiCol_FrameBg];
+            auto b = style->Colors[ImGuiCol_FrameBgActive];
+            auto c = style->Colors[ImGuiCol_FrameBgHovered];
+            style->Colors[ImGuiCol_FrameBg] = ImVec4(0.3, 0.3, 0.15, 0.6);
+            style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.4, 0.4, 0.25, 0.6);
+            style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.35, 0.35, 0.22, 0.6);
+            clicked = ImGui::DragFloat(label, &v->value, v_speed, v_min, v_max, format, flags);
+            style->Colors[ImGuiCol_FrameBg] = a;
+            style->Colors[ImGuiCol_FrameBgActive] = b;
+            style->Colors[ImGuiCol_FrameBgHovered] = c;
+        }
         else {
             clicked = ImGui::DragFloat(label, &v->value, v_speed, v_min, v_max, format, flags);
         }

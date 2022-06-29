@@ -529,31 +529,88 @@ namespace RMImGui {
 			if (DisplayTreeNode("Objects", &height))
 			{
 				for (int i = 0; i < IM_ARRAYSIZE(data.primitives); i++) {
-					if (data.primitives[i].prim_type != 0 && DisplayTreeNode(data.primitives[i].name.c_str(), &height))
+					auto p = &data.primitives[i];
+					if (p->prim_type != 0 && DisplayTreeNode(p->name.c_str(), &height))
 					{
-						if (data.primitives[i].transformation.containsKeyframes() && DisplayTreeNode("Transformation", &height)) {
-							std::string full_name = data.primitives[i].name + "/Transformation";
-							auto k = KeyframeBarData(data.primitives[i].transformation.firstFrame(), data.primitives[i].transformation.lastFrame(), height, full_name);
-							k.floats.push_back(&data.primitives[i].transformation.position[0]);
-							k.floats.push_back(&data.primitives[i].transformation.position[1]);
-							k.floats.push_back(&data.primitives[i].transformation.position[2]);
+						if (p->transformation.containsKeyframes() && DisplayTreeNode("Transformation", &height)) {
+							std::string full_name = p->name + "/Transformation";
+							auto k = KeyframeBarData(p->transformation.firstFrame(), p->transformation.lastFrame(), height, full_name);
+							k.floats.push_back(&p->transformation.position[0]);
+							k.floats.push_back(&p->transformation.position[1]);
+							k.floats.push_back(&p->transformation.position[2]);
 
-							k.floats.push_back(&data.primitives[i].transformation.rotation[0]);
-							k.floats.push_back(&data.primitives[i].transformation.rotation[1]);
-							k.floats.push_back(&data.primitives[i].transformation.rotation[2]);
+							k.floats.push_back(&p->transformation.rotation[0]);
+							k.floats.push_back(&p->transformation.rotation[1]);
+							k.floats.push_back(&p->transformation.rotation[2]);
 
-							k.floats.push_back(&data.primitives[i].transformation.scale[0]);
-							k.floats.push_back(&data.primitives[i].transformation.scale[1]);
-							k.floats.push_back(&data.primitives[i].transformation.scale[2]);
+							k.floats.push_back(&p->transformation.scale[0]);
+							k.floats.push_back(&p->transformation.scale[1]);
+							k.floats.push_back(&p->transformation.scale[2]);
 
 							bar_data.push_back(k);
-							if (data.primitives[i].transformation.containsKeyframes()) {
-								if (data.primitives[i].transformation.position.containsKeyframes())
-									DisplayDetailedVector3(data.primitives[i].transformation.position, "Position", full_name + "/Position", draw_list, &height, &bar_data);
-								if (data.primitives[i].transformation.rotation.containsKeyframes())
-									DisplayDetailedVector3(data.primitives[i].transformation.rotation, "Rotation", full_name + "/Rotation", draw_list, &height, &bar_data);
-								if (data.primitives[i].transformation.scale.containsKeyframes())
-									DisplayDetailedVector3(data.primitives[i].transformation.scale, "Scale", full_name + "/Scale", draw_list, &height, &bar_data);
+							if (p->transformation.containsKeyframes()) {
+								if (p->transformation.position.containsKeyframes())
+									DisplayDetailedVector3(p->transformation.position, "Position", full_name + "/Position", draw_list, &height, &bar_data);
+								if (p->transformation.rotation.containsKeyframes())
+									DisplayDetailedVector3(p->transformation.rotation, "Rotation", full_name + "/Rotation", draw_list, &height, &bar_data);
+								if (p->transformation.scale.containsKeyframes())
+									DisplayDetailedVector3(p->transformation.scale, "Scale", full_name + "/Scale", draw_list, &height, &bar_data);
+							}
+							ImGui::TreePop();
+						}
+
+						if (data.primitives[i].mod_count > 0 && DisplayTreeNode("Modifiers", &height)) {
+							for (int j = 0; j < IM_ARRAYSIZE(p->modifiers); j++) {
+								if (p->modifiers[j].modifier == Primitive::ModifierType::NONE_MOD) {
+									continue;
+								}
+
+								switch (p->modifiers[j].modifier) {
+									case Primitive::ModifierType::BEND:
+										if (DisplayTreeNode("Bend", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Factor", p->name + "/Modifier/Bend", draw_list, &height, &bar_data);
+											ImGui::TreePop();
+										}
+										break;
+									case Primitive::ModifierType::DISTORT:
+										if (DisplayTreeNode("Distort", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Factor", p->name + "/Modifier/Distort", draw_list, &height, &bar_data);
+											ImGui::TreePop();
+										}
+										break;
+									case Primitive::ModifierType::ROUND:
+										if (DisplayTreeNode("Round", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Factor", p->name + "/Modifier/Round", draw_list, &height, &bar_data);
+											ImGui::TreePop();
+										}
+										break;
+									case Primitive::ModifierType::TWIST:
+										if (DisplayTreeNode("Twist", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Factor", p->name + "/Modifier/Twist", draw_list, &height, &bar_data);
+											ImGui::TreePop();
+										}
+										break;
+									case Primitive::ModifierType::REPETITION:
+										if (DisplayTreeNode("Repetition", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Period", p->name + "/Modifier/Repetition", draw_list, &height, &bar_data);
+											ImGui::TreePop();
+										}
+										break;
+									case Primitive::ModifierType::REPETITION_LIMITED:
+										if (DisplayTreeNode("Repetition Limited", &height)) {
+											DisplayDetailedKeyframe(p->modifiers[j].attribute0, "Period", p->name + "/Modifier/Repetition Limited", draw_list, &height, &bar_data);
+											if (DisplayTreeNode("Offset", &height)) {
+												DisplayDetailedKeyframe(p->modifiers[j].attribute1, "X", p->name + "/Modifier/Repetition Limited/Offset/X", draw_list, &height, &bar_data);
+												DisplayDetailedKeyframe(p->modifiers[j].attribute2, "Y", p->name + "/Modifier/Repetition Limited/Offset/Y", draw_list, &height, &bar_data);
+												DisplayDetailedKeyframe(p->modifiers[j].attribute3, "Z", p->name + "/Modifier/Repetition Limited/Offset/Z", draw_list, &height, &bar_data);
+												ImGui::TreePop();
+											}
+											ImGui::TreePop();
+										}
+										break;
+									default:
+										break;
+								}
 							}
 							ImGui::TreePop();
 						}
@@ -625,19 +682,31 @@ namespace RMImGui {
 			}
 		}
 
-		for (auto b : bar_data) {
-			auto cur_min_x = x + b.x1 * timeline_step_width + 2;
-			auto cur_max_x = x + b.x2 * timeline_step_width + 4;
-			auto cur_y = y + b.y * 17;
+		for (int w = 0; w < bar_data.size(); w++) {
+			auto b = &bar_data[w];
+			auto cur_min_x = x + b->x1 * timeline_step_width + 2;
+			auto cur_max_x = x + b->x2 * timeline_step_width + 4;
+			auto cur_y = y + b->y * 17;
 
 			if (mouse_pos.x > cur_min_x && mouse_pos.x < cur_max_x && mouse_pos.y > cur_y && mouse_pos.y < cur_y + 14) {
 				bool hoveringFrame = false;
-				for (int i = 0; i < b.frames.size(); i++) {
-					if (mouse_pos.x > x + b.frames[i] * timeline_step_width - 2 && mouse_pos.x < x + b.frames[i] * timeline_step_width + 6) {
+				for (int i = 0; i < b->frames.size(); i++) {
+					if (mouse_pos.x > x + b->frames[i] * timeline_step_width - 2 && mouse_pos.x < x + b->frames[i] * timeline_step_width + 6) {
 						if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 							data.drag = DragStart::KeyframeBarFrame;
 							data.dragSubId = i;
-							data.dragId = b.y;
+							data.dragId = b->y;
+						}
+						if (ImGui::IsKeyDown(ImGuiKey_Delete)) {
+							if (i == b->frames.size() - 1) {
+								b->floats[0]->keyframes.pop_back();
+							}
+							else {
+								for (int j = i; j < b->floats[0]->keyframes.size() - 1; j++) {
+									b->floats[0]->keyframes[j] = b->floats[0]->keyframes[j + 1];
+								}
+								b->floats[0]->keyframes.pop_back();
+							}
 						}
 						cursor = ImGuiMouseCursor_ResizeEW;
 						hoveringFrame = true;
@@ -647,15 +716,15 @@ namespace RMImGui {
 				if (!hoveringFrame) {
 					if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 						data.drag = DragStart::KeyframeBar;
-						data.dragId = b.y;
+						data.dragId = b->y;
 					}
 					cursor = ImGuiMouseCursor_Hand;
 				}
 				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 					bool open = false;
 					for (int i = 0; i < data.bezier_animation_windows.size(); i++) {
-						if (b.floats.size() == 1) {
-							if (data.bezier_animation_windows[i].f == b.floats[0]) {
+						if (b->floats.size() == 1) {
+							if (data.bezier_animation_windows[i].f == b->floats[0]) {
 								open = true;
 							}
 						}
@@ -664,7 +733,7 @@ namespace RMImGui {
 						}
 					}
 					if (!open) {
-						data.bezier_animation_windows.push_back(BezierAnimationWindow(b.floats[0], b.name));
+						data.bezier_animation_windows.push_back(BezierAnimationWindow(b->floats[0], b->name));
 					}
 				}
 			}
