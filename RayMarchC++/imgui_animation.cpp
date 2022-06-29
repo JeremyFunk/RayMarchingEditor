@@ -659,6 +659,9 @@ namespace RMImGui {
 								open = true;
 							}
 						}
+						else {
+							open = true;
+						}
 					}
 					if (!open) {
 						data.bezier_animation_windows.push_back(BezierAnimationWindow(b.floats[0], b.name));
