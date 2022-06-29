@@ -102,14 +102,18 @@ namespace RMImGui {
     };
 
     enum class DragStart {
-        None, TopBar, Timeline, BezierPoint, KeyframeBar, KeyframeBarFrame
+        None, TopBar, Timeline, BezierPoint, BezierTimeline, KeyframeBar, KeyframeBarFrame
     };
 
     struct BezierAnimationWindow {
         AnimatedFloat* f;
         std::string name;
+        float x_offset, y_offset, size_x, size_y;
         BezierAnimationWindow(AnimatedFloat* f, std::string name): f(f), name(name) {
-
+            x_offset = 0;
+            y_offset = 0;
+            size_x = 1;
+            size_y = 1;
         }
         friend bool operator==(const BezierAnimationWindow& a1, const BezierAnimationWindow& a2) {
             return a1.f == a2.f;

@@ -23,6 +23,14 @@ namespace RMImGui {
 			floats = std::vector<AnimatedFloat*>();
 		}
 	};
+	const ImU32 timeline_rect_light = ImColor(ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
+	const ImU32 timeline_rect_light_translucent = ImColor(ImVec4(0.4f, 0.4f, 0.4f, 0.2f));
+	const ImU32 timeline_rect_strong = ImColor(ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
+	const ImU32 timeline_rect_accent = ImColor(ImVec4(0.4f, 0.3f, 0.2f, 1.0f));
+	const ImU32 timeline_rect_covers = ImColor(ImVec4(0.15f, 0.15f, 0.15f, 0.75f));
+	const ImU32 timeline_rect_keyframe = ImColor(ImVec4(0.15f, 0.15f, 0.4f, 0.75f));
+	const ImU32 text_strong = ImColor(ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
+	const float TIMELINE_NUMBER_BAR_SIZE = 20;
 
 	const ImU32 timeline_rect_bar = ImColor(ImVec4(0.6f, 0.6f, 0.4f, 0.75f));
 	const ImU32 timeline_rect_frame_bar = ImColor(ImVec4(0.9f, 0.9f, 0.6f, 0.8f));
@@ -156,14 +164,43 @@ namespace RMImGui {
 		}
 	}
 
+	void DisplayDetailedVector2(AnimatedFloatVec2& vec, const char* name, std::string full_name, ImDrawList* draw_list, int* height, std::vector<KeyframeBarData>* data) {
+		if (DisplayTreeNode(name, height)) {
+			int first = vec.firstFrame();
+			int last = vec.lastFrame();
+			auto k = KeyframeBarData(first, last, *height, full_name);
+			k.floats.push_back(&vec[0]);
+			k.floats.push_back(&vec[1]);
+			data->push_back(k);
+
+			if (vec[0].ContainsKeyframes()) {
+				DisplayDetailedKeyframe(vec[0], "X", full_name + "/X", draw_list, height, data);
+			}
+			if (vec[1].ContainsKeyframes()) {
+				DisplayDetailedKeyframe(vec[1], "Y", full_name + "/Y", draw_list, height, data);
+			}
+
+			ImGui::TreePop();
+		}
+	}
+
+	struct BezierPointInfo {
+		ImVec2 p;
+		ImVec2 inbound, outbound;
+		BezierPointInfo(ImVec2 p, ImVec2 inbound, ImVec2 outbound) : p(p), inbound(inbound), outbound(outbound) {
+
+		}
+	};
 	//static ImVec2 values[] = { ImVec2(0.0f, 0.0f), ImVec2(0.0f, 0.0f), ImVec2(100.0f, 100.0f), ImVec2(100.0f, 100.0f) };
 	bool DisplayBezier(ImGuiData& data, int bezier_id) {
 		auto window = &data.bezier_animation_windows[bezier_id];
 		bool open = true;
 		ImGui::Begin(std::string("Edit Animation: " + window->name).c_str(), &open);
-
+		
 		auto s = ImGui::GetContentRegionAvail();
+		auto total_s = ImGui::GetWindowSize();
 		const ImVec2 p = ImGui::GetCursorScreenPos();
+		const ImVec2 total_p = ImGui::GetWindowPos();
 
 		int x_range_min, x_range_max;
 		float y_range_min = FLT_MAX, y_range_max = FLT_MIN;
@@ -181,7 +218,6 @@ namespace RMImGui {
 		}
 
 
-
 		ImDrawList* draw_list = ImGui::GetWindowDrawList();
 		const ImU32 bez_curve_color = ImColor(ImVec4(0.6f, 0.6f, 0.4f, 0.75f));
 		const ImU32 bez_point_color = ImColor(ImVec4(0.8f, 0.8f, 0.6f, 0.75f));
@@ -195,36 +231,36 @@ namespace RMImGui {
 		float s_x = s.x - padding * 2;
 		float s_y = s.y - padding * 2;
 
+		float move_x = -window->x_offset;
+		float move_y = -window->y_offset;
+
+		float scale_x = 1.0 / window->size_x;
+		float scale_y = 1.0 / window->size_y * 0.0 + 1.0;
 
 		float x_diff = x_range_max - x_range_min;
 		float y_diff = y_range_max - y_range_min;
 
-		struct BezierPointInfo {
-			ImVec2 p;
-			ImVec2 inbound, outbound;
-			BezierPointInfo(ImVec2 p, ImVec2 inbound, ImVec2 outbound) : p(p), inbound(inbound), outbound(outbound) {
-
-			}
-		};
-
+		// Convert Values
 		auto values = std::vector<BezierPointInfo>();
 		for (int i = 0; i < window->f->keyframes.size(); i++) {
-			auto p = ImVec2(((window->f->keyframes[i].frame - x_range_min) / x_diff)* s_x + min_x, (1.0 - (window->f->keyframes[i].value - y_range_min) / y_diff)* s_y + min_y);
+			auto p = ImVec2(((window->f->keyframes[i].frame - x_range_min) / x_diff) * s_x * scale_x + min_x - move_x, (1.0 - (window->f->keyframes[i].value - y_range_min) / y_diff)* s_y * scale_y + min_y - move_y);
 
 			if (i == 0) {
-				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_out - x_range_min) / x_diff) * s_x + min_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_out - y_range_min) / y_diff) * s_y + min_y);
+				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_out - x_range_min) / x_diff) * s_x * scale_x + min_x - move_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_out - y_range_min) / y_diff) * s_y * scale_y + min_y - move_y);
 				values.push_back(BezierPointInfo(p, ImVec2(FLT_MIN, FLT_MIN), v1));
 			}
 			else if (i == window->f->keyframes.size() - 1) {
-				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_in - x_range_min) / x_diff) * s_x + min_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_in - y_range_min) / y_diff) * s_y + min_y);
+				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_in - x_range_min) / x_diff) * s_x * scale_x + min_x - move_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_in - y_range_min) / y_diff) * s_y * scale_y + min_y - move_y);
 				values.push_back(BezierPointInfo(p, v1, ImVec2(FLT_MIN, FLT_MIN)));
 			}
 			else {
-				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_in - x_range_min) / x_diff) * s_x + min_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_in - y_range_min) / y_diff) * s_y + min_y);
-				auto v2 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_out - x_range_min) / x_diff) * s_x + min_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_out - y_range_min) / y_diff) * s_y + min_y);
+				auto v1 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_in - x_range_min) / x_diff) * s_x * scale_x + min_x - move_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_in - y_range_min) / y_diff) * s_y * scale_y + min_y - move_y);
+				auto v2 = ImVec2(((window->f->keyframes[i].frame + window->f->keyframes[i].inter_x_out - x_range_min) / x_diff) * s_x * scale_x + min_x - move_x, (1.0 - (window->f->keyframes[i].value + window->f->keyframes[i].inter_y_out - y_range_min) / y_diff) * s_y * scale_y + min_y - move_y);
 				values.push_back(BezierPointInfo(p, v1, v2));
 			}
 		}
+
+		// Draw 
 		for (int i = 0; i < values.size(); i++) {
 			draw_list->AddCircleFilled(values[i].p, circle_size, bez_point_color);
 			draw_list->AddCircleFilled(values[i].inbound, circle_size, bez_point_color);
@@ -238,9 +274,10 @@ namespace RMImGui {
 			}
 		}
 
+		// Mouse events
+
 		auto mouse_pos = ImGui::GetMousePos();
 		auto transformed_mouse_pos = ImVec2(mouse_pos.x - min_x, mouse_pos.y - min_y);
-		// Mouse events
 		if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
 			for (int i = 0; i < values.size(); i ++) {
 				auto k = &values[i];
@@ -262,40 +299,119 @@ namespace RMImGui {
 						data.dragId = bezier_id;
 					}
 				}
+
+				if (data.drag == DragStart::None) {
+					if (transformed_mouse_pos.x > 0 && transformed_mouse_pos.x < s.x && transformed_mouse_pos.y > 0 && transformed_mouse_pos.y < s.y) {
+						data.drag = DragStart::BezierTimeline;
+						data.dragId = i;
+					}
+				}
 			}
 		}
 
-		
 		if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && data.drag == DragStart::BezierPoint && bezier_id == data.dragId) {
 			auto point = &values[data.dragSubId];
 			auto relative_mouse = ImVec2(mouse_pos.x - point->p.x, mouse_pos.y - point->p.y);
 
-			float new_x = (relative_mouse.x / s.x) * x_diff;
-			float new_y = (-(relative_mouse.y / s.y)) * y_diff;
+			float new_x = (relative_mouse.x / s.x / scale_x) * x_diff;
+			float new_y = (-(relative_mouse.y / s.y / scale_y)) * y_diff;
 
 			if (data.dragSubSubId == 0) {
-				auto in_x = std::min(new_x, 0.0f);
+				if (data.dragSubId != 0 && ImGui::IsKeyDown(ImGuiKey_LeftShift) && data.dragSubId < values.size() - 1 && !(window->f->keyframes[data.dragSubId].inter_x_out == 0 && window->f->keyframes[data.dragSubId].inter_y_out == 0)) {
+					auto x_shift = (point->outbound.x - point->p.x);
+					auto y_shift = point->p.y - point->outbound.y;
+					auto len = -1.0f / std::sqrtf(x_shift * x_shift + y_shift * y_shift);
+					x_shift *= len;
+					y_shift *= len;
 
-				if (data.dragSubId != 0) {
-					in_x = std::max(float(window->f->keyframes[data.dragSubId - 1].frame), in_x);
+					auto m_len = std::sqrtf(relative_mouse.x * relative_mouse.x + relative_mouse.y * relative_mouse.y);
+
+					window->f->keyframes[data.dragSubId].inter_x_in = std::max(float(window->f->keyframes[data.dragSubId - 1].frame) - window->f->keyframes[data.dragSubId].frame, std::min((x_shift * m_len / s.x) * x_diff, 0.0f));
+					window->f->keyframes[data.dragSubId].inter_y_in = (y_shift * m_len / s.y) * y_diff;
 				}
-
-				window->f->keyframes[data.dragSubId].inter_x_in = new_x;
-				window->f->keyframes[data.dragSubId].inter_y_in = new_y;
+				else {
+					auto in_x = std::min(new_x, 0.0f);
+					if (data.dragSubId != 0) {
+						in_x = std::max(float(window->f->keyframes[data.dragSubId - 1].frame) - window->f->keyframes[data.dragSubId].frame, in_x);
+					}
+					window->f->keyframes[data.dragSubId].inter_x_in = in_x;
+					window->f->keyframes[data.dragSubId].inter_y_in = new_y;
+				}
 			}else if (data.dragSubSubId == 1) {
+				if (data.dragSubId != 0 && ImGui::IsKeyDown(ImGuiKey_LeftShift) && data.dragSubId < values.size() - 1 && point->inbound.y != 0 && !(window->f->keyframes[data.dragSubId].inter_x_in == 0 && window->f->keyframes[data.dragSubId].inter_y_in == 0)) {
+					auto x_shift = (point->inbound.x - point->p.x);
+					auto y_shift = point->p.y - point->inbound.y;
+					auto len = -1.0f / std::sqrtf(x_shift * x_shift + y_shift * y_shift);
+					x_shift *= len / scale_x;
+					y_shift *= len / scale_y;
 
-				auto out_x = std::max(new_x, 0.0f);
+					auto m_len = std::sqrtf(relative_mouse.x * relative_mouse.x + relative_mouse.y * relative_mouse.y);
 
-				if (data.dragSubId != values.size() - 1) {
-					out_x = std::min(float(window->f->keyframes[data.dragSubId + 1].frame), out_x);
+					window->f->keyframes[data.dragSubId].inter_x_out = std::min(float(window->f->keyframes[data.dragSubId + 1].frame) - window->f->keyframes[data.dragSubId].frame, std::max((x_shift * m_len / s.x) * x_diff, 0.0f));
+					window->f->keyframes[data.dragSubId].inter_y_out = (y_shift * m_len / s.y) * y_diff;
 				}
-				window->f->keyframes[data.dragSubId].inter_x_out = out_x;
-				window->f->keyframes[data.dragSubId].inter_y_out = new_y;
+				else {
+					auto out_x = std::max(new_x, 0.0f);
+
+					if (data.dragSubId != values.size() - 1) {
+						out_x = std::min(float(window->f->keyframes[data.dragSubId + 1].frame) - window->f->keyframes[data.dragSubId].frame, out_x);
+					}
+					window->f->keyframes[data.dragSubId].inter_x_out = out_x;
+					window->f->keyframes[data.dragSubId].inter_y_out = new_y;
+				}
+			}
+		}
+		else if (data.drag == DragStart::BezierTimeline) {
+			window->x_offset += mouse_pos.x - last_mouse_pos.x;
+			window->y_offset += mouse_pos.y - last_mouse_pos.y;
+		}
+
+		if (transformed_mouse_pos.x > 0 && transformed_mouse_pos.x < s.x && transformed_mouse_pos.y > 0 && transformed_mouse_pos.y < s.y) {
+			if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+				window->size_x = std::min(window->size_x - ImGui::GetIO().MouseWheel / 10, 1.0f);
+			}
+			else {
+				window->size_y += ImGui::GetIO().MouseWheel / 10;
 			}
 		}
 
+		window->x_offset = std::min(0.f, std::max((1.0f - (1.0f / window->size_x)) * s.x - (min_x - p.x), window->x_offset));
+
+		// Render
 		for (int i = 0; i < values.size() - 1; i ++) {
 			draw_list->AddBezierCubic(values[i].p, values[i].outbound, values[i+1].inbound, values[i+1].p, bez_curve_color, 1.0);
+		}
+
+		//std::cout << (p.x + s.x) << "   " << total_p.x << std::endl;
+		
+		// Top bar
+
+		draw_list->AddRectFilled(ImVec2(total_p.x, p.y - 8), ImVec2(total_s.x + total_p.x, TIMELINE_NUMBER_BAR_SIZE + p.y - 8), timeline_rect_strong);
+		float frame_width = (s.x - padding * 2) / x_diff * scale_x;
+		for (int i = 0; i <= x_diff; i++) {
+			if (frame_width < 6 && (i + x_range_min) % 10 != 0)
+				continue;
+			if (frame_width < 18 && (i + x_range_min) % 5 != 0)
+				continue;
+
+			std::string timeline_number = std::to_string(i + x_range_min);
+			auto text_size = ImGui::CalcTextSize(timeline_number.c_str()).x;
+
+			draw_list->AddText(ImVec2(min_x + i * frame_width - text_size * .5f + 3 - move_x, p.y - 5), text_strong, timeline_number.c_str());
+			draw_list->AddRectFilled(ImVec2(min_x + frame_width * i - move_x, p.y + TIMELINE_NUMBER_BAR_SIZE - 8), ImVec2(min_x + frame_width * i + 2 - move_x, p.y + total_s.y), timeline_rect_light_translucent);
+		}
+
+		{
+			float y_per_pixel = (y_diff / s.y);
+			float min_dis_y = y_range_min - y_per_pixel * move_y;
+			float max_dis_y = y_range_max - y_per_pixel * move_y;
+			float dist_y = s.y / 10;
+			for (float i = 1; i < 10; i++) {
+				float rel_i = i / 10.f;
+
+				//draw_list->AddRectFilled(ImVec2(total_p.x, p.y + y_step_size * i - move_y), ImVec2(min_x + s.x, p.y + y_step_size * i - move_y + 2), timeline_rect_light_translucent);
+				draw_list->AddText(ImVec2(min_x, (p.y + s.y) - i * dist_y - 10), text_strong, std::to_string(min_dis_y + rel_i * y_diff).c_str());
+			}
 		}
 
 		ImGui::End();
@@ -326,15 +442,8 @@ namespace RMImGui {
 		const ImVec2 p = ImGui::GetCursorScreenPos();
 		const ImVec2 s = ImGui::GetWindowSize();
 		float x = p.x, y = p.y;
-		const ImU32 timeline_rect_light = ImColor(ImVec4(0.4f, 0.4f, 0.4f, 1.0f));
-		const ImU32 timeline_rect_strong = ImColor(ImVec4(0.2f, 0.2f, 0.2f, 1.0f));
-		const ImU32 timeline_rect_accent = ImColor(ImVec4(0.4f, 0.3f, 0.2f, 1.0f));
-		const ImU32 timeline_rect_covers = ImColor(ImVec4(0.15f, 0.15f, 0.15f, 0.75f));
-		const ImU32 timeline_rect_keyframe = ImColor(ImVec4(0.15f, 0.15f, 0.4f, 0.75f));
-		const ImU32 text_strong = ImColor(ImVec4(0.8f, 0.8f, 0.8f, 1.0f));
 
 		// Timeline number bar
-		const float TIMELINE_NUMBER_BAR_SIZE = 20;
 		const float TIMELINE_OBJECTS_WIDTH = 200;
 		float timeline_step_width = 7.5;
 		float timeline_height = 1000.0;
@@ -453,6 +562,12 @@ namespace RMImGui {
 				}
 				ImGui::TreePop();
 			}
+			if (DisplayTreeNode("Camera", &height)) {
+				DisplayDetailedVector3(data.cam_pos, "Camera Position", "Camera Position", draw_list, &height, &bar_data);
+				DisplayDetailedVector2(data.cam_py, "Camera PY", "Camera PY", draw_list, &height, &bar_data);
+
+				ImGui::TreePop();
+			}
 
 			for (int i = 0; i < bar_data.size(); i++) {
 				auto b = bar_data[i];
@@ -487,11 +602,11 @@ namespace RMImGui {
 					}
 				}
 
-				draw_list->AddRectFilled(ImVec2(std::max(min_x, x + b.x1 * timeline_step_width + 2), y + b.y * 17), ImVec2(std::max(min_x, x + b.x2 * timeline_step_width + 4), y + b.y * 17 + 14), timeline_rect_bar, 0.0f, ImDrawCornerFlags_All);
+				draw_list->AddRectFilled(ImVec2(std::max(min_x, x + b.x1 * timeline_step_width), y + b.y * 17), ImVec2(std::max(min_x, x + b.x2 * timeline_step_width + 2), y + b.y * 17 + 14), timeline_rect_bar, 0.0f, ImDrawCornerFlags_All);
 
 				for (auto k : b.frames) {
 					if (x + k * timeline_step_width + 2 > min_x) {
-						draw_list->AddRectFilled(ImVec2(x + k * timeline_step_width + 2, y + b.y * 17), ImVec2(x + k * timeline_step_width + 4, y + b.y * 17 + 14), timeline_rect_frame_bar, 0.0f, ImDrawCornerFlags_All);
+						draw_list->AddRectFilled(ImVec2(x + k * timeline_step_width, y + b.y * 17), ImVec2(x + k * timeline_step_width + 2, y + b.y * 17 + 14), timeline_rect_frame_bar, 0.0f, ImDrawCornerFlags_All);
 					}
 				}
 			}

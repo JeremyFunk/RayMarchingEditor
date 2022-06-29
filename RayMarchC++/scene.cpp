@@ -64,6 +64,10 @@ namespace Scene {
         for (int i = 0; i < f.keyframes.size(); i++) {
             j["keyframes"][i]["value"] = f.keyframes[i].value;
             j["keyframes"][i]["frame"] = f.keyframes[i].frame;
+            j["keyframes"][i]["inter_x_in"] = f.keyframes[i].inter_x_in;
+            j["keyframes"][i]["inter_x_out"] = f.keyframes[i].inter_x_out;
+            j["keyframes"][i]["inter_y_in"] = f.keyframes[i].inter_y_in;
+            j["keyframes"][i]["inter_y_out"] = f.keyframes[i].inter_y_out;
         }
         j["value"] = f.value;
     }
@@ -80,7 +84,7 @@ namespace Scene {
     AnimatedFloat jsonToAnimatedFloat(json& j) {
         AnimatedFloat f;
         for (int i = 0; i < j["keyframes"].size(); i++) {
-            f.AddKeyframe(j["keyframes"][i]["frame"], j["keyframes"][i]["value"]);
+            f.AddKeyframe(j["keyframes"][i]["frame"], j["keyframes"][i]["value"], j["keyframes"][i]["inter_x_in"], j["keyframes"][i]["inter_x_out"], j["keyframes"][i]["inter_y_in"], j["keyframes"][i]["inter_y_out"]);
         }
         f.value = j["value"];
         return f;

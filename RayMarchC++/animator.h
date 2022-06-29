@@ -113,6 +113,24 @@ public:
             return a.frame < b.frame;
         });
     }
+    void AddKeyframe(int frame, float value, float x_in, float x_out, float y_in, float y_out) {
+        for (int i = 0; i < keyframes.size(); i++) {
+            if (keyframes[i].frame == frame) {
+                keyframes[i].value = value;
+                return;
+            }
+        }
+        auto f = FloatKeyframe(frame, value);
+        f.inter_x_in = x_in;
+        f.inter_x_out = x_out;
+        f.inter_y_in = y_in;
+        f.inter_y_out = y_out;
+        keyframes.push_back(f);
+
+        std::sort(keyframes.begin(), keyframes.end(), [](FloatKeyframe a, FloatKeyframe b) {
+            return a.frame < b.frame;
+        });
+    }
 
     bool ContainsKeyframe(int frame) {
         for (int i = 0; i < keyframes.size(); i++) {
@@ -121,6 +139,31 @@ public:
             }
         }
         return false;
+    }
+
+    //void ImDrawList::PathBezierCubicCurveTo(const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, int num_segments)
+    //{
+    //    ImVec2 p1 = _Path.back();
+    //    if (num_segments == 0)
+    //    {
+    //        PathBezierCubicCurveToCasteljau(&_Path, p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y, _Data->CurveTessellationTol, 0); // Auto-tessellated
+    //    }
+    //    else
+    //    {
+    //        float t_step = 1.0f / (float)num_segments;
+    //        for (int i_step = 1; i_step <= num_segments; i_step++)
+    //            _Path.push_back(ImBezierCubicCalc(p1, p2, p3, p4, t_step * i_step));
+    //    }
+    //}
+
+    glm::vec2 ImBezierCubicCalc(const glm::vec2& p1, const glm::vec2& p2, const glm::vec2& p3, const glm::vec2& p4, float t)
+    {
+        float u = 1.0f - t;
+        float w1 = u * u * u;
+        float w2 = 3 * u * u * t;
+        float w3 = 3 * u * t * t;
+        float w4 = t * t * t;
+        return glm::vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y);
     }
 
     void Recalculate(int frame) {
@@ -160,9 +203,14 @@ public:
             }
         }
 
-        float frameDiff = max.frame - min.frame;
+        float f_diff = (max.frame - min.frame);
+
+        auto f = ImBezierCubicCalc(glm::vec2(0.0f, min.value), glm::vec2(min.inter_x_out / f_diff, min.value + min.inter_y_out), glm::vec2(1.0f + max.inter_x_in / f_diff, max.value + max.inter_y_in), glm::vec2(1.0f, max.value), (frame - min.frame) / f_diff);
+        //std::cout << f << std::endl;
+        /*float frameDiff = max.frame - min.frame;
         float factor = (frame - min.frame) / frameDiff;
-        value = min.value * (1.0f - factor) + max.value * factor;
+        value = min.value * (1.0f - factor) + max.value * factor;*/
+        value = f.y;
     }
 
     std::string toString() {
@@ -272,6 +320,28 @@ struct AnimatedFloatVec2 {
         values[1] = f2;
     }
 
+    int firstFrame() {
+        int min = 10000;
+        if (values[0].ContainsKeyframes()) {
+            min = values[0].firstFrame();
+        }
+        if (values[1].ContainsKeyframes()) {
+            min = std::min(min, values[1].firstFrame());
+        }
+        return min;
+    }
+
+    int lastFrame() {
+        int max = -1;
+        if (values[0].ContainsKeyframes()) {
+            max = values[0].lastFrame();
+        }
+        if (values[1].ContainsKeyframes()) {
+            max = std::max(max, values[1].lastFrame());
+        }
+        return max;
+    }
+    
     std::string toString() {
         std::stringstream ss;
         ss << "{x: " << values[0].toString() << "y: " << values[1].toString() << "}";
