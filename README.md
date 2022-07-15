@@ -11,4 +11,4 @@ Render examples:
 This editor does not yet support the full capabilities of my [Rusty Ray Marcher](https://github.com/JeremyFunk/RustRayMarching), but I am actively working on it as a side-project, it should have full support in a couple of months.
 
 
-Signed distance functions and some of the modifiers are 
+Signed distance functions and some of the modifiers are translated from the excellent [Inigo Quilez guides](https://iquilezles.org/). Phong Shading is loosely based on the [Scratchapixel](https://www.scratchapixel.com/index.php?redirect) implementation.
