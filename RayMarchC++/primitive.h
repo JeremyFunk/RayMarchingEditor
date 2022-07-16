@@ -239,5 +239,6 @@ namespace Primitive {
     ShaderPrimitive getMandelbulbPrimitive(float power, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 	ShaderPrimitive getSpherePrimitive(float radius, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 	ShaderPrimitive getTorusPrimitive(float radius, float ring_radius, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+	ShaderPrimitive getJuliaPrimitive(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 }
 #endif

@@ -8,7 +8,6 @@
 struct FloatKeyframe {
     int frame;
     float value;
-
     // Bezier interpolation data
     float inter_x_in, inter_y_in, inter_x_out, inter_y_out;
     FloatKeyframe(int frame, float value): frame(frame), value(value), inter_x_in(0), inter_x_out(0), inter_y_in(0), inter_y_out(0) {}
@@ -25,6 +24,8 @@ struct less_than_key
 struct AnimatedFloat {
     float value;
     std::vector<FloatKeyframe> keyframes;
+    int script = -1;
+    int mode = 0;
 
     AnimatedFloat(float value) : value(value) {
         keyframes = std::vector<FloatKeyframe>();

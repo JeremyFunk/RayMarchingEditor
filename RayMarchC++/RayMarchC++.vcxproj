@@ -117,7 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Jerem\Documents\GitHub\imgui-docking\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Jerem\Documents\GitHub\zep-master\include;C:\Users\Jerem\Documents\GitHub\boost_1_79_0;C:\Users\Jerem\Documents\GitHub\luawrapper-master\include;C:\Users\Jerem\Documents\GitHub\imgui-docking\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,6 +153,7 @@
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="helpers_glm.cpp" />
     <ClCompile Include="imgui_animation.cpp" />
+    <ClCompile Include="imgui_code.cpp" />
     <ClCompile Include="imgui_handler.cpp" />
     <ClCompile Include="primitive.cpp" />
     <ClCompile Include="program.cpp" />
@@ -178,6 +179,7 @@
     <ClInclude Include="free_cam.h" />
     <ClInclude Include="helpers_glm.h" />
     <ClInclude Include="imgui_animation.h" />
+    <ClInclude Include="imgui_code.h" />
     <ClInclude Include="imgui_data.h" />
     <ClInclude Include="imgui_handler.h" />
     <ClInclude Include="json.hpp" />

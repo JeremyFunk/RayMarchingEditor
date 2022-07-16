@@ -1,6 +1,7 @@
 #pragma once
 #include "primitive.h"
-
+#include <boost/array.hpp>
+#include "LuaContext.hpp"
 namespace RMImGui {
 
     enum class TimelineMode {
@@ -120,6 +121,35 @@ namespace RMImGui {
         }
     };
 
+    struct ScriptWindow {
+        AnimatedFloat* f;
+        int index;
+        std::string name;
+
+        ScriptWindow(AnimatedFloat* f, int index, std::string name) : f(f), index(index), name(name) {
+
+        }
+    };
+
+    struct ScriptData {
+        boost::array<char, SCRIPT_SIZE> script = boost::array<char, SCRIPT_SIZE>();
+
+        float evaluate(float t) {
+            try {
+                LuaContext lua;
+                std::string data(script.begin(), script.end());
+                lua.executeCode(data);
+                //evaluate = function(t) return t * 2.0 end
+                const auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
+                std::cout << eval(t) << std::endl;
+                return 0.0;
+            }
+            catch (const std::exception& e) {
+                std::cout << e.what() << std::endl;
+            }
+        }
+    };
+
     struct ImGuiData {
         int* shading_mode;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
@@ -134,6 +164,41 @@ namespace RMImGui {
         float dragData;
         Textures textures;
         TimelineData timeline;
+        std::vector<ScriptData> scripts = std::vector<ScriptData>();
+        std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
+
+        void addBezier(AnimatedFloat* f, std::string name) {
+            if (f->keyframes.size() < 2)
+                return;
+
+            bool open = false;
+            for (int i = 0; i < bezier_animation_windows.size(); i++) {
+                if (bezier_animation_windows[i].f == f) {
+                    open = true;
+                }
+            }
+            if (!open) {
+                bezier_animation_windows.push_back(BezierAnimationWindow(f, name));
+            }
+        }
+
+        int addScript(AnimatedFloat* f) {
+            ScriptData d;
+            scripts.push_back(d);
+            return scripts.size() - 1;
+        }
+
+        void openScriptWindow(AnimatedFloat* f, std::string name) {
+            bool open = false;
+            for (int i = 0; i < open_scripts.size(); i++) {
+                if (open_scripts[i].f == f) {
+                    open = true;
+                }
+            }
+            if (!open) {
+                open_scripts.push_back(RMImGui::ScriptWindow(f, f->script, name));
+            }
+        }
 
         AnimationData selectedAnimationData() {
             AnimationData d;

@@ -135,4 +135,19 @@ namespace Primitive {
 
 		return cube;
 	}
+	ShaderPrimitive getJuliaPrimitive(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+		ShaderPrimitive cube;
+		cube.transformation.position = position;
+		cube.transformation.rotation = rotation;
+		cube.transformation.scale = scale;
+		cube.transformation.matrix = transformationMatrix(rotation, scale);
+		cube.prim_type = 5;
+		cube.values[0] = 0.45*cos(0.5)-0.3;
+		cube.values[1] = 0.45 * cos(3.9);
+		cube.values[2] = 0.45 * cos(1.4);
+		cube.values[3] = 0.45 * cos(1.1);
+		cube.name = "Julia";
+
+		return cube;
+	}
 }

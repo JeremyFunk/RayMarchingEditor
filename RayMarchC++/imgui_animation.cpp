@@ -423,8 +423,7 @@ namespace RMImGui {
 			last_mouse_pos = ImGui::GetMousePos();
 		}
 
-		bool open = false;
-		if (!ImGui::Begin("Timeline", &open))
+		if (!ImGui::Begin("Timeline"))
 		{
 			ImGui::End();
 			return;
@@ -733,7 +732,7 @@ namespace RMImGui {
 						}
 					}
 					if (!open) {
-						data.bezier_animation_windows.push_back(BezierAnimationWindow(b->floats[0], b->name));
+						data.addBezier(b->floats[0], b->name);
 					}
 				}
 			}

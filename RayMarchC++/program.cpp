@@ -33,6 +33,7 @@ using namespace glm;
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
 
+
 #include <iostream>
 #include "RMIO.h"
 #include "primitive.h"
@@ -195,6 +196,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 int setupWindow() {
+
+
 	// Initialise GLFW
 	if (!glfwInit())
 	{
@@ -210,7 +213,7 @@ int setupWindow() {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(screen_width, screen_height, "Tutorial 02 - Red triangle", NULL, NULL);
+	window = glfwCreateWindow(screen_width, screen_height, "Ray Marching Editor", NULL, NULL);
 	if (window == NULL) {
 		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
 		getchar();
@@ -242,9 +245,12 @@ int setupWindow() {
 	return 0;
 }
 
-
 int main()
 {
+
+
+	//return 0;
+
 	if (!RMIO::SetupDirectories()) {
 		return -1;
 	}
@@ -260,13 +266,13 @@ int main()
 	GLuint programID = Shader::LoadShaders("vertex.vs", "fragment.fs");
 	
 	auto uniforms = Shader::LoadUniforms(programID);
-
-	auto prim1 = Primitive::getCubePrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
-	auto prim2 = Primitive::getSpherePrimitive(1.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
+	auto prim1 = Primitive::getJuliaPrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
+	//auto prim1 = Primitive::getCubePrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
+	//auto prim2 = Primitive::getSpherePrimitive(1.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	//prim.add_distort_modifier(vec3(1), 0.2, 2.2);
 	//prim.add_round_modifier(0.2);
 	data.addPrimitive(prim1);
-	data.addPrimitive(prim2);
+	//data.addPrimitive(prim2);
 
 	Primitive::ShaderGroupPrimitive group = Primitive::opSubtractionSmooth(1, 0, 0.2);
 	//data.groupPrimitives[0] = group;
@@ -341,8 +347,15 @@ int main()
 		float currentFrame = static_cast<float>(glfwGetTime());
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
-
 		data.timeline.update(deltaTime);
+
+		/*{
+			float t = glfwGetTime() * .15f;
+			data.primitives->values[0] = 0.45 * cos(0.5 + t * 1.2) - 0.3;
+			data.primitives->values[1] = 0.45 * cos(3.9 + t * 1.7);
+			data.primitives->values[2] = 0.45 * cos(1.4 + t * 1.3);
+			data.primitives->values[3] = 0.45 * cos(1.1 + t * 2.5);
+		}*/
 
 		processInput(window);
 		int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
@@ -405,7 +418,7 @@ int main()
 		glDisableVertexAttribArray(1);
 		
 		RMImGui::RenderImGui(data);
-
+	
 		// Swap buffers
 		glfwSwapBuffers(window);
 		Sleep(1);

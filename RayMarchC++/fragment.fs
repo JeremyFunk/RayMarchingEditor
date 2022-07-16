@@ -28,7 +28,7 @@ struct Primitive{
     Modifier modifiers[MOD_COUNT];
     mat3 transformation;
     vec3 position;
-    int prim_type; // 1 = Sphere, 2 = Torus, 3 = Cube, 4 = Mandelbulb
+    int prim_type; // 1 = Sphere, 2 = Torus, 3 = Cube, 4 = Mandelbulb, 5 = Julia 4D-Quat
 };
 
 struct GroupModifier{
@@ -70,6 +70,32 @@ struct RayMarchResult {
     bool hit;
     bool hitRaw;
 };
+
+
+vec4 qsqr(vec4 a) // square a quaterion
+{
+    return vec4( a.x*a.x - a.y*a.y - a.z*a.z - a.w*a.w,
+                 2.0*a.x*a.y,
+                 2.0*a.x*a.z,
+                 2.0*a.x*a.w );
+}
+vec4 qmul(vec4 a, vec4 b)
+{
+    return vec4(
+        a.x * b.x - a.y * b.y - a.z * b.z - a.w * b.w,
+        a.y * b.x + a.x * b.y + a.z * b.w - a.w * b.z, 
+        a.z * b.x + a.x * b.z + a.w * b.y - a.y * b.w,
+        a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y );
+
+}
+vec4 qconj(vec4 a)
+{
+    return vec4( a.x, -a.yzw );
+}
+float qlength2(vec4 q)
+{
+    return dot(q,q);
+}
 
 // 0 = radius
 float sphere(vec3 pt, float radius){
@@ -113,6 +139,35 @@ float mandelbulb(vec3 pt, float power){
         z += pt;
     }
     return .5 * log(r) * r / dr;
+}
+
+//float julia(vec3 p, vec4 c, out vec4 oTrap){
+float julia(vec3 p, vec4 c){
+    vec4 z = vec4(p,0.0);
+    float md2 = 1.0;
+    float mz2 = dot(z,z);
+
+    vec4 trap = vec4(abs(z.xyz),dot(z,z));
+
+    float n = 1.0;
+    for(int i=0; i<11; i++)
+    {
+        // dz -> 2·z·dz, meaning |dz| -> 2·|z|·|dz|
+        // Now we take the 2.0 out of the loop and do it at the end with an exp2
+        md2 *= 4.0*mz2;
+        // z  -> z^2 + c
+        z = qsqr(z) + c;  
+
+        trap = min( trap, vec4(abs(z.xyz),dot(z,z)) );
+
+        mz2 = qlength2(z);
+        if(mz2>4.0) break;
+        n += 1.0;
+    }
+    
+    //oTrap = trap;
+
+    return 0.25*sqrt(mz2/md2)*log(mz2);  // d = 0.5·|z|·log|z|/|z'|
 }
 
 
@@ -222,6 +277,8 @@ DistanceResult getDist(vec3 pt, int full){
             de[i] = modify_distance(cube(transformed, vec3(u_primitives[i].attribute0, u_primitives[i].attribute1, u_primitives[i].attribute2)), i);
         }else if(u_primitives[i].prim_type == 4){
             de[i] = modify_distance(mandelbulb(transformed, u_primitives[i].attribute0), i);
+        }else if(u_primitives[i].prim_type == 5){
+            de[i] = modify_distance(julia(transformed, vec4(u_primitives[i].attribute0, u_primitives[i].attribute1, u_primitives[i].attribute2, u_primitives[i].attribute3)), i);
         }
     }
 
