@@ -21,7 +21,7 @@ namespace RMImGui {
         return std::find(std::begin(delimiters), std::end(delimiters), element) != std::end(delimiters);
     }*/
 
-    void DisplayCode(RMImGui::ScriptWindow* w, RMImGui::ImGuiData* d) {
+    bool DisplayCode(RMImGui::AnimationWindow* w, RMImGui::ImGuiData& d) {
         /*std::stringstream ss_line(code);
         std::string to_line;*/
 
@@ -70,9 +70,14 @@ namespace RMImGui {
         ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", &flags, ImGuiInputTextFlags_ReadOnly);
         ImGui::CheckboxFlags("ImGuiInputTextFlags_AllowTabInput", &flags, ImGuiInputTextFlags_AllowTabInput);
         ImGui::CheckboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", &flags, ImGuiInputTextFlags_CtrlEnterForNewLine);*/
-        ImGui::InputTextMultiline("##source", d->scripts[w->index].script.data(), SCRIPT_SIZE, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
+        bool open = true;
+        ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(80000, 80000));
+        ImGui::Begin(w->name.c_str(), &open);
+        ImGui::InputTextMultiline("##source", d.scripts[w->f->script].script.data(), SCRIPT_SIZE, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
         if (ImGui::Button("Run")) {
-            d->scripts[w->index].evaluate(d->timeline.frame / d->timeline.fps);
+            d.scripts[w->f->script].evaluate(d.timeline.frame / d.timeline.fps);
         }
+        ImGui::End();
+        return open;
     }
 }

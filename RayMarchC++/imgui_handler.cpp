@@ -462,6 +462,13 @@ namespace RMImGui {
 		}
 	}
 
+	bool DisplayAnimationWindow(ImGuiData& d, int index) {
+		if (d.windows[index].f->mode == AnimatedFloatMode::Bezier) {
+			return DisplayBezier(d, index);
+		}
+		return DisplayCode(&d.windows[index], d);
+	}
+
 	void RenderImGui(ImGuiData& data) {
 		DisplayTimeline(data);
 		
@@ -477,20 +484,14 @@ namespace RMImGui {
 		DisplayEngine(data);
 		ImGui::End();
 
-		auto open_scripts = std::vector<ScriptWindow>();
-		for (int i = 0; i < data.open_scripts.size(); i++) {
-			bool open = true;
-			ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(80000, 80000));
-			ImGui::Begin(data.open_scripts[i].name.c_str(), &open);
-			RMImGui::DisplayCode(&data.open_scripts[i], &data);
-			ImGui::End();
-
-			if (open) {
-				open_scripts.push_back(data.open_scripts[i]);
+		auto windows = std::vector<AnimationWindow>();
+		for (int i = 0; i < data.windows.size(); i++) {
+			if (DisplayAnimationWindow(data, i)) {
+				windows.push_back(data.windows[i]);
 			}
 		}
+		data.windows = windows;
 
-		data.open_scripts = open_scripts;
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

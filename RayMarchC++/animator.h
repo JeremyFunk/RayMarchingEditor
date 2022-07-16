@@ -20,12 +20,15 @@ struct less_than_key
     }
 };
 
+enum AnimatedFloatMode {
+    Bezier = 0, Code = 1
+};
 
 struct AnimatedFloat {
     float value;
     std::vector<FloatKeyframe> keyframes;
     int script = -1;
-    int mode = 0;
+    int mode = AnimatedFloatMode::Bezier;
 
     AnimatedFloat(float value) : value(value) {
         keyframes = std::vector<FloatKeyframe>();

@@ -193,7 +193,7 @@ namespace RMImGui {
 	};
 	//static ImVec2 values[] = { ImVec2(0.0f, 0.0f), ImVec2(0.0f, 0.0f), ImVec2(100.0f, 100.0f), ImVec2(100.0f, 100.0f) };
 	bool DisplayBezier(ImGuiData& data, int bezier_id) {
-		auto window = &data.bezier_animation_windows[bezier_id];
+		auto window = &data.windows[bezier_id];
 		bool open = true;
 		ImGui::Begin(std::string("Edit Animation: " + window->name).c_str(), &open);
 		
@@ -721,9 +721,9 @@ namespace RMImGui {
 				}
 				if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
 					bool open = false;
-					for (int i = 0; i < data.bezier_animation_windows.size(); i++) {
+					for (int i = 0; i < data.windows.size(); i++) {
 						if (b->floats.size() == 1) {
-							if (data.bezier_animation_windows[i].f == b->floats[0]) {
+							if (data.windows[i].f == b->floats[0]) {
 								open = true;
 							}
 						}
@@ -732,7 +732,7 @@ namespace RMImGui {
 						}
 					}
 					if (!open) {
-						data.addBezier(b->floats[0], b->name);
+						data.addWindow(b->floats[0], b->name);
 					}
 				}
 			}
@@ -761,13 +761,6 @@ namespace RMImGui {
 		}
 		ImGui::SetMouseCursor(cursor);
 
-		auto beziers = std::vector<BezierAnimationWindow>();
-		for (int i = 0; i < data.bezier_animation_windows.size(); i++) {
-			if (DisplayBezier(data, i)) {
-				beziers.push_back(data.bezier_animation_windows[i]);
-			}
-		}
-		data.bezier_animation_windows = beziers;
 
 		ImGui::End();
 		last_mouse_pos = mouse_pos;

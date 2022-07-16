@@ -106,33 +106,30 @@ namespace RMImGui {
         None, TopBar, Timeline, BezierPoint, BezierTimeline, KeyframeBar, KeyframeBarFrame
     };
 
-    struct BezierAnimationWindow {
+    struct AnimationWindow {
         AnimatedFloat* f;
         std::string name;
         float x_offset, y_offset, size_x, size_y;
-        BezierAnimationWindow(AnimatedFloat* f, std::string name): f(f), name(name) {
+        AnimationWindow(AnimatedFloat* f, std::string name): f(f), name(name) {
             x_offset = 0;
             y_offset = 0;
             size_x = 1;
             size_y = 1;
         }
-        friend bool operator==(const BezierAnimationWindow& a1, const BezierAnimationWindow& a2) {
+        friend bool operator==(const AnimationWindow& a1, const AnimationWindow& a2) {
             return a1.f == a2.f;
-        }
-    };
-
-    struct ScriptWindow {
-        AnimatedFloat* f;
-        int index;
-        std::string name;
-
-        ScriptWindow(AnimatedFloat* f, int index, std::string name) : f(f), index(index), name(name) {
-
         }
     };
 
     struct ScriptData {
         boost::array<char, SCRIPT_SIZE> script = boost::array<char, SCRIPT_SIZE>();
+
+        ScriptData() {
+            std::string default_val = "evaluate = function(t)\n  return t\nend";
+            for (int i = 0; i < default_val.size(); i++) {
+                script[i] = default_val[i];
+            }
+        }
 
         float evaluate(float t) {
             try {
@@ -158,28 +155,23 @@ namespace RMImGui {
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py;
         bool reposition_cam = false, camSelected = false;
-        std::vector<BezierAnimationWindow> bezier_animation_windows = std::vector<BezierAnimationWindow>();
         DragStart drag;
         int dragId, dragSubId, dragSubSubId;
         float dragData;
         Textures textures;
         TimelineData timeline;
+        std::vector<AnimationWindow> windows = std::vector<AnimationWindow>();
         std::vector<ScriptData> scripts = std::vector<ScriptData>();
-        std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
+        //std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
 
-        void addBezier(AnimatedFloat* f, std::string name) {
-            if (f->keyframes.size() < 2)
-                return;
-
-            bool open = false;
-            for (int i = 0; i < bezier_animation_windows.size(); i++) {
-                if (bezier_animation_windows[i].f == f) {
-                    open = true;
+        int addWindow(AnimatedFloat* f, std::string name) {
+            for (int i = 0; i < windows.size(); i++) {
+                if (windows[i].f == f) {
+                    return i;
                 }
             }
-            if (!open) {
-                bezier_animation_windows.push_back(BezierAnimationWindow(f, name));
-            }
+            windows.push_back(AnimationWindow(f, name));
+            return windows.size() - 1;
         }
 
         int addScript(AnimatedFloat* f) {
@@ -188,7 +180,7 @@ namespace RMImGui {
             return scripts.size() - 1;
         }
 
-        void openScriptWindow(AnimatedFloat* f, std::string name) {
+        /*void openScriptWindow(AnimatedFloat* f, std::string name) {
             bool open = false;
             for (int i = 0; i < open_scripts.size(); i++) {
                 if (open_scripts[i].f == f) {
@@ -198,7 +190,7 @@ namespace RMImGui {
             if (!open) {
                 open_scripts.push_back(RMImGui::ScriptWindow(f, f->script, name));
             }
-        }
+        }*/
 
         AnimationData selectedAnimationData() {
             AnimationData d;

@@ -5,5 +5,5 @@
 #include "imgui_data.h"
 #include "constants.h"
 namespace RMImGui {
-    void DisplayCode(RMImGui::ScriptWindow* w, RMImGui::ImGuiData* d);
+    bool DisplayCode(RMImGui::AnimationWindow* w, RMImGui::ImGuiData& d);
 }

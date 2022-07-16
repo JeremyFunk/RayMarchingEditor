@@ -48,7 +48,8 @@ namespace ImGui {
             v->AddKeyframe(frame, v->value);
         }
         else if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_B)) {
-            data->addBezier(v, name);
+            data->addWindow(v, name);
+            v->mode = AnimatedFloatMode::Bezier;
             res.graph = true;
         }
         else if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_C)) {
@@ -56,7 +57,8 @@ namespace ImGui {
                 int result = data->addScript(v);
                 v->script = result;
             }
-            data->openScriptWindow(v, name);
+            data->addWindow(v, name);
+            v->mode = AnimatedFloatMode::Code;
             res.code = true;
         }
         return res;
