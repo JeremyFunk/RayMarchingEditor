@@ -3,7 +3,10 @@
 #include <sstream>
 #include <iostream>
 #include <vector>
+#include "imgui_stdlib.h"
 #include "boost/algorithm/string.hpp"
+#include <windows.h>
+#pragma comment(lib, "winmm.lib")
 namespace RMImGui {
     /*ImVec4 GetColor(std::string name) {
         if (name == "local") {
@@ -41,7 +44,7 @@ namespace RMImGui {
         //        std::string element = "";
         //        for (int i = 0; i < to_line.size(); i++) {
         //            bool is_delimiter = Delimited(to_line[i]);
-        //            if (is_delimiter) {
+        //            if (is_delimiter) { 
         //                ImGui::TextColored(GetColor(element), element.c_str());
         //                ImGui::SameLine();
 
@@ -70,12 +73,67 @@ namespace RMImGui {
         ImGui::CheckboxFlags("ImGuiInputTextFlags_ReadOnly", &flags, ImGuiInputTextFlags_ReadOnly);
         ImGui::CheckboxFlags("ImGuiInputTextFlags_AllowTabInput", &flags, ImGuiInputTextFlags_AllowTabInput);
         ImGui::CheckboxFlags("ImGuiInputTextFlags_CtrlEnterForNewLine", &flags, ImGuiInputTextFlags_CtrlEnterForNewLine);*/
+
+
         bool open = true;
         ImGui::SetNextWindowSizeConstraints(ImVec2(100, 100), ImVec2(80000, 80000));
         ImGui::Begin(w->name.c_str(), &open);
-        ImGui::InputTextMultiline("##source", d.scripts[w->f->script].script.data(), SCRIPT_SIZE, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
-        if (ImGui::Button("Run")) {
-            d.scripts[w->f->script].evaluate(d.timeline.frame / d.timeline.fps);
+
+        std::string name = "Select Script";
+
+        if (w->f->script != -1) {
+            name = d.scripts[w->f->script].name;
+        }
+        auto script_names = d.getScriptNames();
+        if (ImGui::BeginCombo("##script_select", name.c_str())) {
+            for (int i = 0; i < script_names.size(); i++) {
+                if (ImGui::Selectable(script_names[i], true)) {
+                    w->f->script = i;
+                }
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("New Script")) {
+            ImGui::OpenPopup(("enter_script_name_" + w->name).c_str());
+        }
+        /*if (ImGui::BeginPopupModal("Enter Name of Script", &w->entering_name)) {
+            
+        }*/
+        if (ImGui::BeginPopupContextItem(("enter_script_name_" + w->name).c_str()))
+        {
+            ImGui::InputText("Enter Script Name", &w->temp_name);
+            ImGui::SameLine();
+            if (ImGui::Button("Enter") || ImGui::IsKeyReleased(ImGuiKey_Enter)) {
+                if (boost::trim_copy(w->temp_name) == "" || w->temp_name.size() >= FILENAME_MAX) {
+                    PlaySound(TEXT("recycle.wav"), NULL, SND_ASYNC);
+                }
+                else {
+                    bool found = false;
+                    for (auto s : script_names) {
+                        if (s == w->temp_name) {
+                            found = true;
+                            PlaySound(TEXT("recycle.wav"), NULL, SND_ASYNC);
+                        }
+                    }
+                    if (!found) {
+                        w->f->script = d.addScript(w->f, w->temp_name);
+                        ImGui::CloseCurrentPopup();
+                    }
+                }
+            }
+            ImGui::EndPopup();
+        }
+
+        if (w->f->script != -1) {
+            ImGui::InputTextMultiline("##source", d.scripts[w->f->script].script.data(), SCRIPT_SIZE, ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), ImGuiInputTextFlags_AllowTabInput);
+            if (ImGui::Button("Compile")) {
+                d.scripts[w->f->script].compile();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Run")) {
+                d.scripts[w->f->script].evaluate(d.timeline.frame / d.timeline.fps);
+            }
         }
         ImGui::End();
         return open;

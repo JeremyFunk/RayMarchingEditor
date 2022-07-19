@@ -4,7 +4,6 @@
 #include <glm/glm.hpp>
 #include <sstream>
 #include <iostream>
-
 struct FloatKeyframe {
     int frame;
     float value;
@@ -170,51 +169,57 @@ public:
         return glm::vec2(w1 * p1.x + w2 * p2.x + w3 * p3.x + w4 * p4.x, w1 * p1.y + w2 * p2.y + w3 * p3.y + w4 * p4.y);
     }
 
-    void Recalculate(int frame) {
-        if (keyframes.size() == 0)
-            return;
-        if (keyframes.size() == 1)
-        {
-            value = keyframes[0].value;
-            return;
-        }
-        for (int i = 0; i < keyframes.size(); i++) {
-            if (keyframes[i].frame == frame) {
-                value = keyframes[i].value;
-                return;
+    bool Recalculate(int frame) {
+        if (mode == AnimatedFloatMode::Bezier) {
+            if (keyframes.size() == 0)
+                return false;
+            if (keyframes.size() == 1)
+            {
+                value = keyframes[0].value;
+                return false;
             }
-        }
-
-        FloatKeyframe min = keyframes[0], max = keyframes[keyframes.size()-1];
-
-        if (min.frame > frame) {
-            value = min.value;
-            return;
-        }
-
-        if (max.frame < frame) {
-            value = max.value;
-            return;
-        }
-
-        for (int i = 0; i < keyframes.size(); i++) {
-            if (keyframes[i].frame < frame) {
-                min = keyframes[i];
+            for (int i = 0; i < keyframes.size(); i++) {
+                if (keyframes[i].frame == frame) {
+                    value = keyframes[i].value;
+                    return false;
+                }
             }
-            else {
-                max = keyframes[i];
-                break;
+
+            FloatKeyframe min = keyframes[0], max = keyframes[keyframes.size() - 1];
+
+            if (min.frame > frame) {
+                value = min.value;
+                return false;
             }
+
+            if (max.frame < frame) {
+                value = max.value;
+                return false;
+            }
+
+            for (int i = 0; i < keyframes.size(); i++) {
+                if (keyframes[i].frame < frame) {
+                    min = keyframes[i];
+                }
+                else {
+                    max = keyframes[i];
+                    break;
+                }
+            }
+
+            float f_diff = (max.frame - min.frame);
+
+            auto f = ImBezierCubicCalc(glm::vec2(0.0f, min.value), glm::vec2(min.inter_x_out / f_diff, min.value + min.inter_y_out), glm::vec2(1.0f + max.inter_x_in / f_diff, max.value + max.inter_y_in), glm::vec2(1.0f, max.value), (frame - min.frame) / f_diff);
+            //std::cout << f << std::endl;
+            /*float frameDiff = max.frame - min.frame;
+            float factor = (frame - min.frame) / frameDiff;
+            value = min.value * (1.0f - factor) + max.value * factor;*/
+            value = f.y;
         }
-
-        float f_diff = (max.frame - min.frame);
-
-        auto f = ImBezierCubicCalc(glm::vec2(0.0f, min.value), glm::vec2(min.inter_x_out / f_diff, min.value + min.inter_y_out), glm::vec2(1.0f + max.inter_x_in / f_diff, max.value + max.inter_y_in), glm::vec2(1.0f, max.value), (frame - min.frame) / f_diff);
-        //std::cout << f << std::endl;
-        /*float frameDiff = max.frame - min.frame;
-        float factor = (frame - min.frame) / frameDiff;
-        value = min.value * (1.0f - factor) + max.value * factor;*/
-        value = f.y;
+        else {
+            return true;
+        }
+        return false;
     }
 
     std::string toString() {
@@ -230,10 +235,16 @@ struct AnimatedFloatVec3 {
     AnimatedFloat operator [] (int i) const { return values[i]; }
     AnimatedFloat& operator [] (int i) { return values[i]; }
 
-    void Recalculate(int frame) {
-        values[0].Recalculate(frame);
-        values[1].Recalculate(frame);
-        values[2].Recalculate(frame);
+    void Recalculate(int frame, std::vector<AnimatedFloat*>* vec) {
+        if (values[0].Recalculate(frame)) {
+            vec->push_back(&values[0]);
+        }
+        if (values[1].Recalculate(frame)) {
+            vec->push_back(&values[1]);
+        }
+        if (values[2].Recalculate(frame)) {
+            vec->push_back(&values[2]);
+        }
     }
     void getKeyframes(std::vector<int>* p_keyframes) {
         values[0].getKeyframes(p_keyframes);
@@ -303,9 +314,11 @@ struct AnimatedFloatVec2 {
     AnimatedFloat operator [] (int i) const { return values[i]; }
     AnimatedFloat& operator [] (int i) { return values[i]; }
 
-    void Recalculate(int frame) {
-        values[0].Recalculate(frame);
-        values[1].Recalculate(frame);
+    void Recalculate(int frame, std::vector<AnimatedFloat*>* vec) {
+        if (values[0].Recalculate(frame))
+            vec->push_back(&values[0]);
+        if (values[1].Recalculate(frame))
+            vec->push_back(&values[1]);
     }
     void getKeyframes(std::vector<int>* p_keyframes) {
         values[0].getKeyframes(p_keyframes);

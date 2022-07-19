@@ -2,6 +2,8 @@
 #include "primitive.h"
 #include <boost/array.hpp>
 #include "LuaContext.hpp"
+#include <chrono>
+#include <vector>
 namespace RMImGui {
 
     enum class TimelineMode {
@@ -10,6 +12,9 @@ namespace RMImGui {
 
     enum class TimelineDisplay {
         Overview, Detailed,
+    };
+    enum class GameEngineState {
+        Start, Engine,
     };
 
     struct TexturesTimeline {
@@ -109,6 +114,7 @@ namespace RMImGui {
     struct AnimationWindow {
         AnimatedFloat* f;
         std::string name;
+        std::string temp_name = "";
         float x_offset, y_offset, size_x, size_y;
         AnimationWindow(AnimatedFloat* f, std::string name): f(f), name(name) {
             x_offset = 0;
@@ -123,23 +129,35 @@ namespace RMImGui {
 
     struct ScriptData {
         boost::array<char, SCRIPT_SIZE> script = boost::array<char, SCRIPT_SIZE>();
+        bool recompile;
+        std::string name;
+        std::function<float(float)> eval;
 
-        ScriptData() {
+        ScriptData(std::string name) {
             std::string default_val = "evaluate = function(t)\n  return t\nend";
             for (int i = 0; i < default_val.size(); i++) {
                 script[i] = default_val[i];
             }
+            this->name = name;
+        }
+
+        void rename(std::string name) {
+
+        }
+
+        void compile() {
+            recompile = true;
         }
 
         float evaluate(float t) {
             try {
-                LuaContext lua;
-                std::string data(script.begin(), script.end());
-                lua.executeCode(data);
-                //evaluate = function(t) return t * 2.0 end
-                const auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
-                std::cout << eval(t) << std::endl;
-                return 0.0;
+                //auto start = std::chrono::high_resolution_clock::now();
+                //float result = eval(t);
+                //auto finish = std::chrono::high_resolution_clock::now();
+
+                //std::cout << result << std::endl;
+                //std::cout << std::chrono::duration_cast<std::chrono::microseconds>(finish - start).count() << "ns\n";
+                return eval(t);
             }
             catch (const std::exception& e) {
                 std::cout << e.what() << std::endl;
@@ -157,9 +175,11 @@ namespace RMImGui {
         bool reposition_cam = false, camSelected = false;
         DragStart drag;
         int dragId, dragSubId, dragSubSubId;
+        std::string project_path;
         float dragData;
         Textures textures;
         TimelineData timeline;
+        GameEngineState engine_state = GameEngineState::Start;
         std::vector<AnimationWindow> windows = std::vector<AnimationWindow>();
         std::vector<ScriptData> scripts = std::vector<ScriptData>();
         //std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
@@ -174,8 +194,36 @@ namespace RMImGui {
             return windows.size() - 1;
         }
 
-        int addScript(AnimatedFloat* f) {
-            ScriptData d;
+        std::vector<const char*> getScriptNames() {
+            auto vec = std::vector<const char*>();
+            for (auto& s : scripts) {
+                vec.push_back(s.name.c_str());
+            }
+            return vec;
+        }
+
+        //void loadScripts()
+
+        int addScript(AnimatedFloat* f, std::string& filename) {
+            int count = 1;
+            std::string assigned_name = std::string(filename);
+            while(true) {
+                bool found = false;
+                for (auto &s : scripts) {
+                    if (s.name == assigned_name) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    break;
+                }
+                assigned_name = filename + std::to_string(count);
+                count += 1;
+            }
+
+            filename = assigned_name;
+
+            ScriptData d = ScriptData(assigned_name);
             scripts.push_back(d);
             return scripts.size() - 1;
         }
@@ -225,15 +273,20 @@ namespace RMImGui {
             return d;
         }
 
-        void animate(int frame) {
+        void animate(int frame) {//
+            auto vec = std::vector<AnimatedFloat*>();
             for (int i = 0; i < COUNT_PRIMITIVE; i++) {
-                primitives[i].animate(frame);
+                primitives[i].animate(frame, &vec);
             }
             for (int i = 0; i < COUNT_GROUP_MODIFIER - 1; i++) {
-                groupPrimitives[i].animate(frame);
+                groupPrimitives[i].animate(frame, &vec);
             }
-            cam_pos.Recalculate(frame);
-            cam_py.Recalculate(frame);
+            cam_pos.Recalculate(frame, &vec);
+            cam_py.Recalculate(frame, &vec);
+
+            for (auto p : vec) {
+                p->value = scripts[p->script].evaluate(frame / timeline.fps);
+            }
         }
 
         void addPrimitive(Primitive::ShaderPrimitive prim) {

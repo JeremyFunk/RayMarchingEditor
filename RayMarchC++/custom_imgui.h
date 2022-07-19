@@ -4,7 +4,6 @@
 #include "imgui_impl_opengl3.h"
 #include "animator.h"
 #include <imgui_internal.h>
-#include "imgui_data.h"
 
 namespace ImGui {
 
@@ -53,10 +52,6 @@ namespace ImGui {
             res.graph = true;
         }
         else if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_C)) {
-            if (v->script == -1) {
-                int result = data->addScript(v);
-                v->script = result;
-            }
             data->addWindow(v, name);
             v->mode = AnimatedFloatMode::Code;
             res.code = true;

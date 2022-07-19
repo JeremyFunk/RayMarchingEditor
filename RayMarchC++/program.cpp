@@ -197,7 +197,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 
 int setupWindow() {
 
-
 	// Initialise GLFW
 	if (!glfwInit())
 	{
@@ -235,7 +234,7 @@ int setupWindow() {
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSetWindowSizeCallback(window, window_size_callback);
@@ -247,9 +246,7 @@ int setupWindow() {
 
 int main()
 {
-
-
-	//return 0;
+	LuaContext lua;
 
 	if (!RMIO::SetupDirectories()) {
 		return -1;
@@ -328,125 +325,134 @@ int main()
 	float power = 0.0;
 	data.shading_mode = &shading_mode;
 	int lastTimelineFrame = data.timeline.frame;
+
 	do{
 		glClear(GL_COLOR_BUFFER_BIT);
-
-		if (cam_mode == 1) {
-			//data.cam_py = vec2(camera.Pitch, camera.Yaw);
-			//data.cam_pos = camera.Position;
-		}
-		else {
-			/*camera.Pitch = data.cam_py[0].value;
-			camera.Yaw = data.cam_py[1].value;
-
-			camera.Position = data.cam_pos.toVec();
-
-			camera.updateCameraVectors();*/
-		}
-		
-		float currentFrame = static_cast<float>(glfwGetTime());
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
-		data.timeline.update(deltaTime);
-
-		/*{
-			float t = glfwGetTime() * .15f;
-			data.primitives->values[0] = 0.45 * cos(0.5 + t * 1.2) - 0.3;
-			data.primitives->values[1] = 0.45 * cos(3.9 + t * 1.7);
-			data.primitives->values[2] = 0.45 * cos(1.4 + t * 1.3);
-			data.primitives->values[3] = 0.45 * cos(1.1 + t * 2.5);
-		}*/
-
-		processInput(window);
-		int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-		glfwGetCursorPos(window, &xpos, &ypos);
-		
-		auto view = camera.GetViewMatrix();
-		bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
-
-		glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
-		glUniform3f(uniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
-		glUniform2f(uniforms.u_resolution, float(screen_width), float(screen_height));
-		glUniform1i(uniforms.shading_mode, shading_mode);
-		glUniform1i(uniforms.render_cam, render_cam);
-		int prim_count = 0;
-		for (auto p : data.primitives) {
-			if (p.prim_type != 0) {
-				prim_count += 1;
-			}
-		}
-
-		glUniform3f(uniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
-		glUniform1i(uniforms.u_prim_count, prim_count);
-		PrepareShader(data.primitives, data.groupPrimitives, uniforms);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		//glUniform3f(sh_color, 1.0, 0.6, 0.7);
+		if (data.engine_state == RMImGui::GameEngineState::Start) {
+			RMImGui::RenderImGui(data);
+		}
+		else if (data.engine_state == RMImGui::GameEngineState::Engine) {
+			for (auto& c : data.scripts) {
+				if (c.recompile) {
+					try {
+						std::string data(c.script.begin(), c.script.end());
+						lua.executeCode(data);
+						auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
+						float result = eval(2.0);
+						result = eval(2.2);
+						result = eval(0.0);
+						c.eval = eval;
+					}
+					catch (const std::exception& e) {
+						std::cout << e.what() << std::endl;
+					}
+					c.recompile = false;
+				}
+			}
 
-		// Use our shader
-		glUseProgram(programID);
+			float currentFrame = static_cast<float>(glfwGetTime());
+			deltaTime = currentFrame - lastFrame;
+			lastFrame = currentFrame;
+			data.timeline.update(deltaTime);
 
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
+			/*{
+				float t = glfwGetTime() * .15f;
+				data.primitives->values[0] = 0.45 * cos(0.5 + t * 1.2) - 0.3;
+				data.primitives->values[1] = 0.45 * cos(3.9 + t * 1.7);
+				data.primitives->values[2] = 0.45 * cos(1.4 + t * 1.3);
+				data.primitives->values[3] = 0.45 * cos(1.1 + t * 2.5);
+			}*/
 
-		glEnableVertexAttribArray(1);
-		glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
-		glVertexAttribPointer(
-			1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			2,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			0,                  // stride
-			(void*)0            // array buffer offset
-		);
+			processInput(window);
+			int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
+			glfwGetCursorPos(window, &xpos, &ypos);
 
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4); // 3 indices starting at 0 -> 1 triangle
+			auto view = camera.GetViewMatrix();
+			bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
-		
-		RMImGui::RenderImGui(data);
-	
-		// Swap buffers
+			glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
+			glUniform3f(uniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
+			glUniform2f(uniforms.u_resolution, float(screen_width), float(screen_height));
+			glUniform1i(uniforms.shading_mode, shading_mode);
+			glUniform1i(uniforms.render_cam, render_cam);
+			int prim_count = 0;
+			for (auto p : data.primitives) {
+				if (p.prim_type != 0) {
+					prim_count += 1;
+				}
+			}
+
+			glUniform3f(uniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
+			glUniform1i(uniforms.u_prim_count, prim_count);
+			PrepareShader(data.primitives, data.groupPrimitives, uniforms);
+
+			// Use our shader
+			glUseProgram(programID);
+
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+			glVertexAttribPointer(
+				0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				3,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			glEnableVertexAttribArray(1);
+			glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
+			glVertexAttribPointer(
+				1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+				2,                  // size
+				GL_FLOAT,           // type
+				GL_FALSE,           // normalized?
+				0,                  // stride
+				(void*)0            // array buffer offset
+			);
+
+			// Draw the triangle !
+			glDrawArrays(GL_TRIANGLE_FAN, 0, 4); // 3 indices starting at 0 -> 1 triangle
+
+			glDisableVertexAttribArray(0);
+			glDisableVertexAttribArray(1);
+
+			RMImGui::RenderImGui(data);
+
+			// Swap buffers
+
+			if (lastTimelineFrame != data.timeline.frame) {
+
+				data.animate(data.timeline.frame);
+			}
+
+			if (data.reposition_cam && enteredCam) {
+				update_render_camera();
+			}
+			else if (enteredCam) {
+				update_camera();
+			}
+			lastTimelineFrame = data.timeline.frame;
+		}
 		glfwSwapBuffers(window);
 		Sleep(1);
 		glfwPollEvents();
-
-		if (lastTimelineFrame != data.timeline.frame) {
-
-			data.animate(data.timeline.frame);
-		}
-
-		if (data.reposition_cam && enteredCam) {
-			update_render_camera();
-		}
-		else if (enteredCam) {
-			update_camera();
-		}
-		lastTimelineFrame = data.timeline.frame;
 
 	} // Check if the ESC key was pressed or the window was closed
 	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
 		glfwWindowShouldClose(window) == 0);
 
-	auto original = Scene::toJson(Scene::createScene(data));
+	/*auto original = Scene::toJson(Scene::createScene(data));
 	auto sceneBack = Scene::convertScene(Scene::toScene(original));
 	auto transformed = Scene::toJson(Scene::createScene(sceneBack));
 	std::cout << (original == transformed ? "Same" : "different") << std::endl << std::endl;
 	std::cout << original << std::endl << std::endl;
-	std::cout << transformed << std::endl << std::endl;
+	std::cout << transformed << std::endl << std::endl;*/
 
 
 	ImGui_ImplOpenGL3_Shutdown();

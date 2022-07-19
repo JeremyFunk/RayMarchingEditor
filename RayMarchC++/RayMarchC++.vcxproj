@@ -118,6 +118,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\Users\Jerem\Documents\GitHub\zep-master\include;C:\Users\Jerem\Documents\GitHub\boost_1_79_0;C:\Users\Jerem\Documents\GitHub\luawrapper-master\include;C:\Users\Jerem\Documents\GitHub\imgui-docking\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -155,6 +156,7 @@
     <ClCompile Include="imgui_animation.cpp" />
     <ClCompile Include="imgui_code.cpp" />
     <ClCompile Include="imgui_handler.cpp" />
+    <ClCompile Include="imgui_stdlib.cpp" />
     <ClCompile Include="primitive.cpp" />
     <ClCompile Include="program.cpp" />
     <ClCompile Include="RMIO.cpp" />
@@ -182,6 +184,7 @@
     <ClInclude Include="imgui_code.h" />
     <ClInclude Include="imgui_data.h" />
     <ClInclude Include="imgui_handler.h" />
+    <ClInclude Include="imgui_stdlib.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="primitive.h" />
     <ClInclude Include="RMIO.h" />

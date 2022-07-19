@@ -27,9 +27,16 @@ namespace Scene {
         std::vector<SceneModifier> modifiers;
     };
 
+    struct SceneScript {
+        boost::array<char, SCRIPT_SIZE> script = boost::array<char, SCRIPT_SIZE>();
+        std::string name;
+    };
+
     struct Scene {
         std::vector<SceneObject> objects;
         std::vector<SceneGroupModifier> group_modifiers;
+        std::vector<SceneScript> scripts = std::vector<SceneScript>();
+        std::string directory;
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py;
     };
@@ -37,5 +44,5 @@ namespace Scene {
     Scene createScene(RMImGui::ImGuiData& data);
     RMImGui::ImGuiData convertScene(Scene scene);
     std::string toJson(Scene scene);
-    Scene toScene(std::string str);
+    Scene toScene(std::string str, std::string path);
 }

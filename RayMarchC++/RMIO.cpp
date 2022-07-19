@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <direct.h>
+#include <filesystem>
 //Guides: https://github.com/MicrosoftDocs/win32/blob/docs/desktop-src/shell/common-file-dialog.md#sample-usage
 
 namespace RMIO {
@@ -24,6 +25,81 @@ namespace RMIO {
         }
     }
 
+    std::vector<std::string> GetFilesInDir(std::string path) {
+        auto res = std::vector<std::string>();
+        for (const auto& entry : std::filesystem::directory_iterator(path)) {
+            res.push_back(entry.path().string());
+        }
+        return res;
+    }
+
+    std::string PathGetFilePart(std::string path) {
+        try {
+            const size_t last_slash_idx = path.rfind('\\');
+            if (std::string::npos == last_slash_idx)
+            {
+                return path;
+            }
+
+            return path.substr(last_slash_idx + 1, path.size());
+        }
+        catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+            return NULL;
+        }
+    }
+    std::string PathGetFilenamePart(std::string path) {
+        try {
+            path = PathGetFilePart(path);
+            const size_t last_slash_idx = path.rfind('.');
+            if (std::string::npos == last_slash_idx)
+            {
+                return path;
+            }
+
+            return path.substr(0, last_slash_idx);
+        }
+        catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+            return NULL;
+        }
+    }
+
+    std::string PathGetDirectoryPart(std::string path) {
+        try {
+            std::string directory;
+            const size_t last_slash_idx = path.rfind('\\');
+            if (std::string::npos != last_slash_idx)
+            {
+                directory = path.substr(0, last_slash_idx);
+            }
+
+            return directory;
+        }
+        catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+            return NULL;
+        }
+    }
+
+    bool SetupProjectDirectories(std::string path) {
+        try {
+            std::string directory;
+            const size_t last_slash_idx = path.rfind('\\');
+            if (std::string::npos != last_slash_idx)
+            {
+                directory = path.substr(0, last_slash_idx);
+            }
+
+            _mkdir((directory + "\\" + "scripts").c_str());
+        }
+        catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
+            return false;
+        }
+        return true;
+    }
+
     bool SetupDirectories() {
         try {
             auto fullPath = GetAppdataPath() + "\\" + appName;
@@ -37,7 +113,7 @@ namespace RMIO {
             return true;
         }
         catch (const std::exception& e) {
-            std::cout << e.what();
+            std::cout << e.what() << std::endl;
             return false;
         }
     }
@@ -48,7 +124,11 @@ namespace RMIO {
 
             std::ofstream file;
             file.open(fullPath);
+            if (!file.is_open()) {
+                return false;
+            }
             file << content;
+            file.flush();
             file.close();
 
             return true;
@@ -67,12 +147,13 @@ namespace RMIO {
                 std::cout << "failed to open " << path << '\n';
             }
             else {
+                std::string content = "";
                 std::string tp;
-                while (std::getline(inFile, tp)) {}
+                while (std::getline(inFile, tp)) { content += tp + "\n"; }
 
                 inFile.close();
 
-                return tp;
+                return content;
             }
             return NULL;
         }
@@ -167,6 +248,12 @@ namespace RMIO {
         s.selected = true;
         return s;
     }
+
+
+
+
+
+
     SaveReturn ExplorerSaveFile()
     {
         SaveReturn s;

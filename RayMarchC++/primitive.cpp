@@ -6,10 +6,10 @@
 #include "primitive.h"
 
 namespace Primitive {
-	void Transformation::animate(int frame) {
-		position.Recalculate(frame);
-		rotation.Recalculate(frame);
-		scale.Recalculate(frame);
+	void Transformation::animate(int frame, std::vector<AnimatedFloat*>* vec) {
+		position.Recalculate(frame, vec);
+		rotation.Recalculate(frame, vec);
+		scale.Recalculate(frame, vec);
 		matrix = transformationMatrix(glm::vec3(rotation[0].value, rotation[1].value, rotation[2].value), glm::vec3(scale[0].value, scale[1].value, scale[2].value));
 	}
 

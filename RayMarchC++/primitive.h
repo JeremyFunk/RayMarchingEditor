@@ -1,5 +1,4 @@
-#ifndef PRIMITIVE_H
-#define PRIMITIVE_H
+#pragma once
 #include <string>
 #include <vector>
 #include "constants.h"
@@ -38,7 +37,7 @@ namespace Primitive {
 		AnimatedFloatVec3 scale;
 		glm::mat3x3 matrix;
 
-		void animate(int frame);
+		void animate(int frame, std::vector<AnimatedFloat*>* vec);
 		void getKeyframes(std::vector<int>* p_keyframes) {
 			position.getKeyframes(p_keyframes);
 			rotation.getKeyframes(p_keyframes);
@@ -90,12 +89,17 @@ namespace Primitive {
 		AnimatedFloat attribute4;
 		ModifierType modifier;
 
-		void Animate(int frame) {
-			attribute0.Recalculate(frame);
-			attribute1.Recalculate(frame);
-			attribute2.Recalculate(frame);
-			attribute3.Recalculate(frame);
-			attribute4.Recalculate(frame);
+		void Animate(int frame, std::vector<AnimatedFloat*>* vec) {
+			if (attribute0.Recalculate(frame))
+				vec->push_back(&attribute0);
+			if (attribute1.Recalculate(frame))
+				vec->push_back(&attribute1);
+			if (attribute2.Recalculate(frame))
+				vec->push_back(&attribute2);
+			if (attribute3.Recalculate(frame))
+				vec->push_back(&attribute3);
+			if (attribute4.Recalculate(frame))
+				vec->push_back(&attribute4);
 		}
 
 		void getKeyframes(std::vector<int>* p_keyframes) {
@@ -119,8 +123,10 @@ namespace Primitive {
 			primAttribute.getKeyframes(p_keyframes);
 		}
 
-		void animate(int frame) {
-			primAttribute.Recalculate(frame);
+		void animate(int frame, std::vector<AnimatedFloat*>* vec) {
+			if (primAttribute.Recalculate(frame)) {
+				vec->push_back(&primAttribute);
+			}
 		}
 
 		std::string name() {
@@ -158,14 +164,15 @@ namespace Primitive {
 			transformation.getKeyframes(p_keyframes);
 		}
 
-		void animate(int frame) {
+		void animate(int frame, std::vector<AnimatedFloat*>* vec) {
 			for (int i = 0; i < 10 - 1; i++) {
-				values[i].Recalculate(frame);
+				if (values[i].Recalculate(frame))
+					vec->push_back(&values[i]);
 			}
 			for (int i = 0; i < COUNT_PRIMITIVE_MODIFIER - 1; i++ ) {
-				modifiers[i].Animate(frame);
+				modifiers[i].Animate(frame, vec);
 			}
-			transformation.animate(frame);
+			transformation.animate(frame, vec);
 		}
 
 		void removeModifier(int index) {
@@ -241,4 +248,3 @@ namespace Primitive {
 	ShaderPrimitive getTorusPrimitive(float radius, float ring_radius, glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 	ShaderPrimitive getJuliaPrimitive(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 }
-#endif

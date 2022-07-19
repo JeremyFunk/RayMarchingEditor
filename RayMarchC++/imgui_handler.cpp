@@ -431,7 +431,7 @@ namespace RMImGui {
 				
 				if (file.selected) {
 					auto content = RMIO::Load(file.path);
-					auto im = Scene::convertScene(Scene::toScene(content));
+					auto im = Scene::convertScene(Scene::toScene(content, RMIO::PathGetDirectoryPart(file.file)));
 					for(int i = 0; i < COUNT_PRIMITIVE; i++){
 						auto trans = data.primitives[i].transformation;
 						
@@ -449,6 +449,11 @@ namespace RMImGui {
 					}
 					data.cam_pos = im.cam_pos;
 					data.cam_py = im.cam_py;
+					data.project_path = RMIO::PathGetDirectoryPart(file.path);
+					data.scripts = im.scripts;
+					for (int i = 0; i < data.scripts.size(); i++) {
+						data.scripts[i].compile();
+					}
 				}
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S") || ImGui::MenuItem("Save As", "Ctrl+Shift+S")) {
@@ -469,9 +474,54 @@ namespace RMImGui {
 		return DisplayCode(&d.windows[index], d);
 	}
 
-	void RenderImGui(ImGuiData& data) {
+	void RenderStart(ImGuiData& data) {
+		ImGui::Begin("Select Option");
+
+		if (ImGui::Button("Open Scene")) {
+			auto file = RMIO::ExplorerOpenFile();
+			if (file.selected) {
+				data.project_path = RMIO::PathGetDirectoryPart(file.path);
+				auto content = RMIO::Load(file.path);
+				auto im = Scene::convertScene(Scene::toScene(content, data.project_path));
+				for (int i = 0; i < COUNT_PRIMITIVE; i++) {
+					auto trans = data.primitives[i].transformation;
+
+					data.primitives[i] = im.primitives[i];
+					Primitive::updateTransformation(&data.primitives[i]);
+				}
+
+				for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+					data.groupPrimitives[i] = im.groupPrimitives[i];
+				}
+				data.scripts = im.scripts;
+				data.cam_pos = im.cam_pos;
+				data.cam_py = im.cam_py;
+				data.engine_state = GameEngineState::Engine;
+				for (int i = 0; i < data.scripts.size(); i++) {
+					data.scripts[i].compile();
+				}
+			}
+			RMIO::SetupProjectDirectories(file.path);
+		}
+		if (ImGui::Button("New Scene")) {
+			auto file = RMIO::ExplorerSaveFile();
+
+			if (file.selected) {
+				RMIO::Save(file.path, Scene::toJson(Scene::createScene(data)));
+				RMIO::SaveAppData("data\\last_path.txt", file.path);
+				data.engine_state = GameEngineState::Engine;
+				data.project_path = RMIO::PathGetDirectoryPart(file.path);
+			}
+
+			RMIO::SetupProjectDirectories(file.path);
+		}
+
+		ImGui::End();
+	}
+
+	void RenderEngineImGui(ImGuiData& data) {
 		DisplayTimeline(data);
-		
+
 		ImGui::BeginMainMenuBar();
 		DisplayFileMenu(data);
 		ImGui::EndMainMenuBar();
@@ -491,9 +541,18 @@ namespace RMImGui {
 			}
 		}
 		data.windows = windows;
-
-
+	}
+	void RenderImGui(ImGuiData& data) {
+		switch (data.engine_state) {
+		case GameEngineState::Engine:
+			RenderEngineImGui(data);
+			break;
+		case GameEngineState::Start:
+			RenderStart(data);
+			break;
+		}
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
+
 }
