@@ -105,6 +105,7 @@ namespace Primitive {
 		cube.transformation.matrix = transformationMatrix(rotation, scale);
 		cube.prim_type = 4;
 		cube.values[0] = power;
+		cube.values[1] = 15.0;
 		auto name = "Mandelbulb";
 		cube.name = name;
 
@@ -146,6 +147,7 @@ namespace Primitive {
 		cube.values[1] = 0.45 * cos(3.9);
 		cube.values[2] = 0.45 * cos(1.4);
 		cube.values[3] = 0.45 * cos(1.1);
+		cube.values[4] = 11.0;
 		cube.name = "Julia";
 
 		return cube;

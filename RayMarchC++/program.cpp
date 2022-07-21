@@ -244,6 +244,22 @@ int setupWindow() {
 	return 0;
 }
 
+void recompile(LuaContext &lua, RMImGui::ScriptData &c) {
+	try {
+		std::string data(c.script.begin(), c.script.end());
+		lua.executeCode(data);
+		auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
+		float result = eval(2.0);
+		result = eval(2.2);
+		result = eval(0.0);
+		c.eval = eval;
+	}
+	catch (const std::exception& e) {
+		std::cout << e.what() << std::endl;
+	}
+	c.recompile = false;
+}
+
 int main()
 {
 	LuaContext lua;
@@ -277,6 +293,7 @@ int main()
 	data.cam_rot = vec3(-1.0, 0.0, 0.0);
 
 	if (!LoadTextureFromFile("images/play.png", &data.textures.timeline.play)) return -1;
+	if (!LoadTextureFromFile("images/loop.png", &data.textures.timeline.loop)) return -1;
 	if (!LoadTextureFromFile("images/next.png", &data.textures.timeline.next)) return -1;
 	if (!LoadTextureFromFile("images/previous.png", &data.textures.timeline.previous)) return -1;
 	if (!LoadTextureFromFile("images/stop.png", &data.textures.timeline.stop)) return -1;
@@ -337,28 +354,29 @@ int main()
 			RMImGui::RenderImGui(data);
 		}
 		else if (data.engine_state == RMImGui::GameEngineState::Engine) {
-			for (auto& c : data.scripts) {
-				if (c.recompile) {
-					try {
-						std::string data(c.script.begin(), c.script.end());
-						lua.executeCode(data);
-						auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
-						float result = eval(2.0);
-						result = eval(2.2);
-						result = eval(0.0);
-						c.eval = eval;
-					}
-					catch (const std::exception& e) {
-						std::cout << e.what() << std::endl;
-					}
-					c.recompile = false;
-				}
-			}
-
 			float currentFrame = static_cast<float>(glfwGetTime());
 			deltaTime = currentFrame - lastFrame;
 			lastFrame = currentFrame;
 			data.timeline.update(deltaTime);
+
+			for (auto& c : data.globals) {
+				if (c.f.mode == AnimatedFloatMode::Code && c.f.script != -1) {
+					if (data.scripts[c.f.script].recompile) {
+						recompile(lua, data.scripts[c.f.script]);
+					}
+					c.f.value = data.scripts[c.f.script].eval(data.timeline.frame / data.timeline.fps);
+				}
+				else {
+					c.f.Recalculate(data.timeline.frame);
+				}
+
+				lua.writeVariable(c.name, c.f.value);
+			}
+			for (auto& c : data.scripts) {
+				if (c.recompile) {
+					recompile(lua, c);
+				}
+			}
 
 			/*{
 				float t = glfwGetTime() * .15f;
@@ -426,9 +444,10 @@ int main()
 
 			// Swap buffers
 
-			if (lastTimelineFrame != data.timeline.frame) {
+			if (lastTimelineFrame != data.timeline.frame || data.recalculate) {
 
 				data.animate(data.timeline.frame);
+				data.recalculate = false;
 			}
 
 			if (data.reposition_cam && enteredCam) {
@@ -444,8 +463,7 @@ int main()
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-		glfwWindowShouldClose(window) == 0);
+	while (glfwWindowShouldClose(window) == 0);
 
 	/*auto original = Scene::toJson(Scene::createScene(data));
 	auto sceneBack = Scene::convertScene(Scene::toScene(original));

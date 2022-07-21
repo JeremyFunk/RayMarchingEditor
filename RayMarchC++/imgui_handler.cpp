@@ -40,6 +40,7 @@ namespace RMImGui {
 	void DisplayMandelbulb(ImGuiData* d, Primitive::ShaderPrimitive* mandelbulb, int frame) {
 		DisplayTransformation(d, mandelbulb, frame);
 		ImGui::KeyframeDragFloat(d, mandelbulb->name + "/Power", "Power", frame, &(mandelbulb->values[0]), 0.01, 0, 40.0, "%.3f", 0);
+		auto res5 = ImGui::KeyframeDragFloat(d, mandelbulb->name + "/Iterations", "Iterations", frame, &(mandelbulb->values[1]), 0.01, -40.0, 40.0, "%.3f", 0);
 	}
 	void DisplayJulia(ImGuiData* d, Primitive::ShaderPrimitive* julia, int frame) {
 		DisplayTransformation(d, julia, frame);
@@ -47,6 +48,7 @@ namespace RMImGui {
 		auto res2 = ImGui::KeyframeDragFloat(d, julia->name + "/Quat2", "Quat2", frame, &(julia->values[1]), 0.01, -40.0, 40.0, "%.3f", 0);
 		auto res3 = ImGui::KeyframeDragFloat(d, julia->name + "/Quat3", "Quat3", frame, &(julia->values[2]), 0.01, -40.0, 40.0, "%.3f", 0);
 		auto res4 = ImGui::KeyframeDragFloat(d, julia->name + "/Quat4", "Quat4", frame, &(julia->values[3]), 0.01, -40.0, 40.0, "%.3f", 0);
+		auto res5 = ImGui::KeyframeDragFloat(d, julia->name + "/Iterations", "Iterations", frame, &(julia->values[4]), 0.01, -40.0, 40.0, "%.3f", 0);
 	}
 
 	void DisplayModifier(Primitive::ShaderPrimitive* element, int index) {
@@ -318,6 +320,111 @@ namespace RMImGui {
 		}
 	}
 
+	void DisplayGlobals(ImGuiData* data) {
+		static char name[64] = "";
+		if (ImGui::Button("Add Global")) {
+			
+			for (int i = 0; i < 64; i++) {
+				name[i] = '\0';
+			}
+
+			ImGui::OpenPopup("add_global_variable");
+		}
+
+		if (ImGui::BeginPopupContextItem("add_global_variable"))
+		{
+			ImGui::InputText("Enter Global Name", name, IM_ARRAYSIZE(name));
+			ImGui::SameLine();
+			if (ImGui::Button("Enter") || ImGui::IsKeyReleased(ImGuiKey_Enter)) {
+				auto reserved = { "and", "break", "do", "else", "elseif", "end", "false", "for", "function", "if", "in", "local", "nil", "not", "or", "repeat", "return", "then", "true", "until", "while" };
+				bool illegal = false;
+				for (auto s : reserved) {
+					if (name == s) {
+						illegal = true;
+					}
+				}
+				auto first_element_illegal = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+				auto legal = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'A', 'b', 'B', 'c', 'C', 'd', 'D', 'e', 'E', 'f', 'F', 'g', 'G', 'h', 'H', 'i', 'I', 'j', 'J', 'k', 'K', 'l', 'L', 'm', 'M', 'n', 'N', 'o', 'O', 'p', 'P', 'q', 'Q', 'r', 'R', 's', 'S', 't', 'T', 'u', 'U', 'v', 'V', 'w', 'W', 'x', 'X', 'y', 'Y', 'z', 'Z', '_' };
+				for (int i = 0; i < 64; i++) {
+					if (name[i] == '\0') {
+						continue;
+					}
+					bool islegal = false;
+					for (auto s : legal) {
+						if (s == name[i]) {
+							islegal = true;
+							break;
+						}
+					}
+
+					if (!islegal) {
+						illegal = true;
+						break;
+					}
+
+					if (i == 0) {
+						for (auto s : first_element_illegal) {
+							if (s == name[i]) {
+								islegal = false;
+								break;
+							}
+						}
+					}
+
+					if (!islegal) {
+						illegal = true;
+						break;
+					}
+				}
+
+				if (illegal) {
+					RMIO::PlayErrorSound();
+				}
+				else {
+					GlobalVariable g;
+					AnimatedFloat f = AnimatedFloat(0.0);
+					g.name = std::string(name);
+					g.f = f;
+					data->globals.push_back(g);
+					ImGui::CloseCurrentPopup();
+				}
+
+			}
+			ImGui::EndPopup();
+		}
+		static int toDelete = -1;
+		for (int i = 0; i < data->globals.size(); i++) {
+			ImGui::KeyframeDragFloat(data, "Global/" + data->globals[i].name, data->globals[i].name.c_str(), data->timeline.frame, &data->globals[i].f, 0.01, -4.0, 4.0, "%.3f");
+			ImGui::SameLine();
+			if (ImGui::Button("Delete")) {
+				toDelete = i;
+				ImGui::OpenPopup("delete_global_variable");
+			}
+		}
+
+		if (ImGui::BeginPopupContextItem("delete_global_variable"))
+		{
+			ImGui::Text("Are you sure you want to delete?");
+
+			if (ImGui::Button("Yes")) {
+				auto s = std::vector<GlobalVariable>();
+				for (int i = 0; i < data->globals.size(); i++) {
+					if (i != toDelete) {
+						s.push_back(data->globals[i]);
+					}
+				}
+				data->globals = s;
+				ImGui::CloseCurrentPopup();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("No")) {
+				ImGui::CloseCurrentPopup();
+			}
+
+			ImGui::EndPopup();
+		}
+	}
+
 	void DisplayObjects(ImGuiData* data) {
 		ImGui::BeginTabBar("##tabs");
 		
@@ -361,7 +468,6 @@ namespace RMImGui {
 			}
 			if (ImGui::CollapsingHeader("Objects"))
 			{
-				int count = 0;
 				for (int i = 0; i < COUNT_PRIMITIVE; i++) {
 					data->primitives[i].setSelected(false);
 					auto p = data->primitives[i];
@@ -369,7 +475,7 @@ namespace RMImGui {
 						continue;
 					}
 
-					if (ImGui::TreeNode(std::string(std::string(p.name) + "##" + std::to_string(count)).c_str()))
+					if (ImGui::TreeNode(std::string(std::string(p.name) + "##" + std::to_string(i)).c_str()))
 					{
 						data->primitives[i].setSelected(true);
 						DisplayElement(data, i);
@@ -377,6 +483,11 @@ namespace RMImGui {
 					}
 				}
 			}
+			ImGui::EndTabItem();
+		}
+
+		if (ImGui::BeginTabItem("Global Variables")) {
+			DisplayGlobals(data);
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
@@ -496,6 +607,7 @@ namespace RMImGui {
 				data.scripts = im.scripts;
 				data.cam_pos = im.cam_pos;
 				data.cam_py = im.cam_py;
+				data.globals = im.globals;
 				data.engine_state = GameEngineState::Engine;
 				for (int i = 0; i < data.scripts.size(); i++) {
 					data.scripts[i].compile();
@@ -533,6 +645,7 @@ namespace RMImGui {
 		ImGui::Begin("Engine");
 		DisplayEngine(data);
 		ImGui::End();
+
 
 		auto windows = std::vector<AnimationWindow>();
 		for (int i = 0; i < data.windows.size(); i++) {

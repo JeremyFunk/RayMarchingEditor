@@ -32,13 +32,19 @@ namespace Scene {
         std::string name;
     };
 
+    struct SceneGlobal {
+        std::string name;
+        AnimatedFloat f;
+    };
+
     struct Scene {
-        std::vector<SceneObject> objects;
-        std::vector<SceneGroupModifier> group_modifiers;
+        std::vector<SceneObject> objects = std::vector<SceneObject>();
+        std::vector<SceneGroupModifier> group_modifiers = std::vector<SceneGroupModifier>();
         std::vector<SceneScript> scripts = std::vector<SceneScript>();
         std::string directory;
         AnimatedFloatVec3 cam_pos;
-        AnimatedFloatVec2 cam_py;
+        AnimatedFloatVec2 cam_py; 
+        std::vector<SceneGlobal> globals = std::vector<SceneGlobal>();
     };
 
     Scene createScene(RMImGui::ImGuiData& data);

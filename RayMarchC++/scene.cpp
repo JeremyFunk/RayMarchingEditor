@@ -69,6 +69,14 @@ namespace Scene {
             scene.scripts.push_back(s);
         }
 
+        for (int i = 0; i < data.globals.size(); i++) {
+            SceneGlobal g;
+            g.name = data.globals[i].name;
+            g.f = data.globals[i].f;
+
+            scene.globals.push_back(g);
+        }
+
         return scene;
     }
 
@@ -131,6 +139,7 @@ namespace Scene {
 
         std::vector<json> objects = std::vector<json>();
         std::vector<json> group_modifiers = std::vector<json>();
+        std::vector<json> globals = std::vector<json>();
         
         for (int i = 0; i < scene.objects.size(); i++) {
             json o;
@@ -172,9 +181,19 @@ namespace Scene {
             group_modifiers.push_back(g);
         }
 
+        for (int i = 0; i < scene.globals.size(); i++) {
+            json g;
+
+            g["name"] = scene.globals[i].name;
+            animatedFloatToJson(scene.globals[i].f, scene, g["f"]);
+
+            globals.push_back(g);
+        }
+
         json j;
         j["objects"] = objects;
         j["group_modifiers"] = group_modifiers;
+        j["globals"] = globals;
         animatedVectorToJson(scene.cam_pos, scene, j["camera"]["cam_pos"]);
         animatedVector2ToJson(scene.cam_py, scene, j["camera"]["cam_py"]);
         return j.dump();
@@ -187,9 +206,6 @@ namespace Scene {
 
         json j = json::parse(str);
         Scene s;
-        s.objects = std::vector<SceneObject>();
-        s.group_modifiers = std::vector<SceneGroupModifier>();
-        s.scripts = std::vector<SceneScript>();
 
         auto scripts = RMIO::GetFilesInDir(path + "\\scripts");
         for (auto script : scripts) {
@@ -261,11 +277,29 @@ namespace Scene {
 
             s.group_modifiers.push_back(g);
         }
+
+        for (int i = 0; i < j["globals"].size(); i++) {
+            SceneGlobal g;
+
+            g.name = j["globals"][i]["name"];
+            g.f = jsonToAnimatedFloat(j["globals"][i]["f"], s);
+
+            s.globals.push_back(g);
+        }
+
         return s;
     }
 
     RMImGui::ImGuiData convertScene(Scene scene) {
         RMImGui::ImGuiData d;
+
+        for (int i = 0; i < scene.globals.size(); i++) {
+            RMImGui::GlobalVariable g;
+            g.name = scene.globals[i].name;
+            g.f = scene.globals[i].f;
+
+            d.globals.push_back(g);
+        }
 
         for (int i = 0; i < scene.scripts.size(); i++) {
             RMImGui::ScriptData s = RMImGui::ScriptData(scene.scripts[i].name);

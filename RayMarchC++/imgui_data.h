@@ -18,7 +18,7 @@ namespace RMImGui {
     };
 
     struct TexturesTimeline {
-        int play, pause, stop, next, previous, reverse_play;
+        int play, pause, stop, next, previous, reverse_play, loop;
     };
 
     struct Textures {
@@ -34,6 +34,7 @@ namespace RMImGui {
         float fps = 30.0f;
         float offset = 0;
         int min_frame = 0, max_frame = 200;
+        bool loop = false;
 
         void update(float dt) {
             if (frame < min_frame) {
@@ -51,8 +52,13 @@ namespace RMImGui {
                 }
 
                 if (frame >= max_frame) {
-                    mode = TimelineMode::Pause;
-                    frame = max_frame;
+                    if (!loop) {
+                        mode = TimelineMode::Pause;
+                        frame = max_frame;
+                    }
+                    else {
+                        frame -= (max_frame - min_frame);
+                    }
                 }
             }
             if (mode == TimelineMode::Reverse) {
@@ -63,8 +69,13 @@ namespace RMImGui {
                 }
 
                 if (frame <= min_frame) {
-                    mode = TimelineMode::Pause;
-                    frame = min_frame;
+                    if (!loop) {
+                        mode = TimelineMode::Pause;
+                        frame = min_frame;
+                    }
+                    else {
+                        frame += (max_frame - min_frame);
+                    }
                 }
             }
         }
@@ -105,6 +116,11 @@ namespace RMImGui {
             }
             return frames;
         }
+    };
+
+    struct GlobalVariable {
+        std::string name; 
+        AnimatedFloat f;
     };
 
     enum class DragStart {
@@ -177,11 +193,13 @@ namespace RMImGui {
         int dragId, dragSubId, dragSubSubId;
         std::string project_path;
         float dragData;
+        bool recalculate = false;
         Textures textures;
         TimelineData timeline;
         GameEngineState engine_state = GameEngineState::Start;
         std::vector<AnimationWindow> windows = std::vector<AnimationWindow>();
         std::vector<ScriptData> scripts = std::vector<ScriptData>();
+        std::vector<GlobalVariable> globals = std::vector<GlobalVariable>();
         //std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
 
         int addWindow(AnimatedFloat* f, std::string name) {
@@ -273,7 +291,7 @@ namespace RMImGui {
             return d;
         }
 
-        void animate(int frame) {//
+        void animate(int frame) {
             auto vec = std::vector<AnimatedFloat*>();
             for (int i = 0; i < COUNT_PRIMITIVE; i++) {
                 primitives[i].animate(frame, &vec);
@@ -285,7 +303,9 @@ namespace RMImGui {
             cam_py.Recalculate(frame, &vec);
 
             for (auto p : vec) {
-                p->value = scripts[p->script].evaluate(frame / timeline.fps);
+                if (p->script != -1) {
+                    p->value = scripts[p->script].evaluate(frame / timeline.fps);
+                }
             }
         }
 

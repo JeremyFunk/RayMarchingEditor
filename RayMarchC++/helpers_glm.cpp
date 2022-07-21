@@ -45,7 +45,7 @@ glm::mat3x3 rotationMatrix(glm::vec3 rotation) {
 
 glm::mat3x3 transformationMatrix(glm::vec3 rotation, glm::vec3 scale) {
     glm::mat3x3 matrix = rotationMatrix(rotation);
-    glm::mat3x3 scaleMat = glm::scale(glm::mat4x4(1.0), scale);
+    glm::mat3x3 scaleMat = glm::scale(glm::mat4x4(1.0), glm::vec3(1.0 / scale.x, 1.0 / scale.y, 1.0 / scale.z));
     return matrix * scaleMat;
 }
 

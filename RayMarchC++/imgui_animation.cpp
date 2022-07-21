@@ -55,6 +55,7 @@ namespace RMImGui {
 		}
 		controls_x += 25;
 
+
 		if (data.timeline.mode == TimelineMode::Pause) {
 			ImGui::SameLine(controls_x);
 			if (ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.reverse_play), ImVec2(15.0, 15.0))) {
@@ -79,6 +80,29 @@ namespace RMImGui {
 		ImGui::SameLine(controls_x);
 		if (ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.next), ImVec2(15.0, 15.0))) {
 
+		}
+		controls_x += 25;
+
+		ImGui::SameLine(controls_x);
+		if (data.timeline.loop) {
+			ImGuiStyle* style = &ImGui::GetStyle();
+			auto a = style->Colors[ImGuiCol_Button];
+			auto b = style->Colors[ImGuiCol_ButtonActive];
+			auto c = style->Colors[ImGuiCol_ButtonHovered];
+			style->Colors[ImGuiCol_Button] = ImVec4(0.5, 0.5, 0.3, 0.6);
+			style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.6, 0.6, 0.38, 0.6);
+			style->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.55, 0.55, 0.35, 0.6);
+			if (ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.loop), ImVec2(15.0, 15.0))) {
+				data.timeline.loop = !data.timeline.loop;
+			}
+			style->Colors[ImGuiCol_Button] = a;
+			style->Colors[ImGuiCol_ButtonActive] = b;
+			style->Colors[ImGuiCol_ButtonHovered] = c;
+		}
+		else {
+			if (ImGui::ImageButton((void*)(intptr_t)(data.textures.timeline.loop), ImVec2(15.0, 15.0))) {
+				data.timeline.loop = !data.timeline.loop;
+			}
 		}
 
 		ImGui::PushItemWidth(100);

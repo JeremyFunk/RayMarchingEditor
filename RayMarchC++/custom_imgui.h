@@ -56,6 +56,10 @@ namespace ImGui {
             v->mode = AnimatedFloatMode::Code;
             res.code = true;
         }
+
+       /* if (res.clicked || res.code || res.graph)
+            data->recalculate = true;*/
+
         return res;
     }
 

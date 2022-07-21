@@ -9,7 +9,7 @@ namespace RMIO {
         bool selected;
     };
 
-
+    void PlayErrorSound();
     std::vector<std::string> GetFilesInDir(std::string path);
     std::string GetAppdataPath();
     bool SetupDirectories();

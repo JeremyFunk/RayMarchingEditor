@@ -117,12 +117,12 @@ float cube(vec3 pt, vec3 bounds){
 }
 
 // 0 = power
-float mandelbulb(vec3 pt, float power){
+float mandelbulb(vec3 pt, float power, float nIts){
     vec3 z = vec3(pt);
     float dr = 1.0;
     float r = 0.0;
     int i = 0;
-    for(i = 0; i < 15; i++){
+    for(i = 0; i < nIts; i++){
         r = length(z);
         if(r > 2.0){
             break;
@@ -142,7 +142,7 @@ float mandelbulb(vec3 pt, float power){
 }
 
 //float julia(vec3 p, vec4 c, out vec4 oTrap){
-float julia(vec3 p, vec4 c){
+float julia(vec3 p, vec4 c, float nIts){
     vec4 z = vec4(p,0.0);
     float md2 = 1.0;
     float mz2 = dot(z,z);
@@ -150,7 +150,7 @@ float julia(vec3 p, vec4 c){
     vec4 trap = vec4(abs(z.xyz),dot(z,z));
 
     float n = 1.0;
-    for(int i=0; i<11; i++)
+    for(int i=0; i<nIts; i++)
     {
         // dz -> 2·z·dz, meaning |dz| -> 2·|z|·|dz|
         // Now we take the 2.0 out of the loop and do it at the end with an exp2
@@ -276,9 +276,9 @@ DistanceResult getDist(vec3 pt, int full){
         }else if(u_primitives[i].prim_type == 3){
             de[i] = modify_distance(cube(transformed, vec3(u_primitives[i].attribute0, u_primitives[i].attribute1, u_primitives[i].attribute2)), i);
         }else if(u_primitives[i].prim_type == 4){
-            de[i] = modify_distance(mandelbulb(transformed, u_primitives[i].attribute0), i);
+            de[i] = modify_distance(mandelbulb(transformed, u_primitives[i].attribute0, u_primitives[i].attribute1), i);
         }else if(u_primitives[i].prim_type == 5){
-            de[i] = modify_distance(julia(transformed, vec4(u_primitives[i].attribute0, u_primitives[i].attribute1, u_primitives[i].attribute2, u_primitives[i].attribute3)), i);
+            de[i] = modify_distance(julia(transformed, vec4(u_primitives[i].attribute0, u_primitives[i].attribute1, u_primitives[i].attribute2, u_primitives[i].attribute3), u_primitives[i].attribute4), i);
         }
     }
 
@@ -464,10 +464,9 @@ void main()
         if(dist.hit){
             color = vec3(1.0);
         }
-    }
-
-    if(dist.hitRaw || dist.hit){
-        color += vec3(0.2, 0.0, 0.0);
+        if(dist.hitRaw || dist.hit){
+            color += vec3(0.2, 0.0, 0.0);
+        }
     }
     
     // Output to screen

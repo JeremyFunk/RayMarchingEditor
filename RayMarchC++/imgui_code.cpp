@@ -5,8 +5,7 @@
 #include <vector>
 #include "imgui_stdlib.h"
 #include "boost/algorithm/string.hpp"
-#include <windows.h>
-#pragma comment(lib, "winmm.lib")
+#include "RMIO.h"
 namespace RMImGui {
     /*ImVec4 GetColor(std::string name) {
         if (name == "local") {
@@ -97,23 +96,25 @@ namespace RMImGui {
         if (ImGui::Button("New Script")) {
             ImGui::OpenPopup(("enter_script_name_" + w->name).c_str());
         }
-        /*if (ImGui::BeginPopupModal("Enter Name of Script", &w->entering_name)) {
-            
-        }*/
+        ImGui::SameLine();
+        if (ImGui::Button("Delete")) {
+            w->f->script = -1;
+        }
+
         if (ImGui::BeginPopupContextItem(("enter_script_name_" + w->name).c_str()))
         {
             ImGui::InputText("Enter Script Name", &w->temp_name);
             ImGui::SameLine();
             if (ImGui::Button("Enter") || ImGui::IsKeyReleased(ImGuiKey_Enter)) {
                 if (boost::trim_copy(w->temp_name) == "" || w->temp_name.size() >= FILENAME_MAX) {
-                    PlaySound(TEXT("recycle.wav"), NULL, SND_ASYNC);
+                    RMIO::PlayErrorSound();
                 }
                 else {
                     bool found = false;
                     for (auto s : script_names) {
                         if (s == w->temp_name) {
                             found = true;
-                            PlaySound(TEXT("recycle.wav"), NULL, SND_ASYNC);
+                            RMIO::PlayErrorSound();
                         }
                     }
                     if (!found) {
