@@ -17,6 +17,7 @@ namespace Scene {
         scene.cam_pos = data.cam_pos;
         scene.cam_py = data.cam_py;
         scene.directory = data.project_path;
+        scene.cam_data = data.cam_data;
 
         for (int i = 0; i < COUNT_PRIMITIVE; i++) {
             if (data.primitives[i].prim_type != 0) {
@@ -81,18 +82,23 @@ namespace Scene {
     }
 
     void animatedFloatToJson(AnimatedFloat f, Scene &s, json& j) {
-        for (int i = 0; i < f.keyframes.size(); i++) {
-            j["keyframes"][i]["value"] = f.keyframes[i].value;
-            j["keyframes"][i]["frame"] = f.keyframes[i].frame;
-            j["keyframes"][i]["inter_x_in"] = f.keyframes[i].inter_x_in;
-            j["keyframes"][i]["inter_x_out"] = f.keyframes[i].inter_x_out;
-            j["keyframes"][i]["inter_y_in"] = f.keyframes[i].inter_y_in;
-            j["keyframes"][i]["inter_y_out"] = f.keyframes[i].inter_y_out;
+        try {
+            for (int i = 0; i < f.keyframes.size(); i++) {
+                j["keyframes"][i]["value"] = f.keyframes[i].value;
+                j["keyframes"][i]["frame"] = f.keyframes[i].frame;
+                j["keyframes"][i]["inter_x_in"] = f.keyframes[i].inter_x_in;
+                j["keyframes"][i]["inter_x_out"] = f.keyframes[i].inter_x_out;
+                j["keyframes"][i]["inter_y_in"] = f.keyframes[i].inter_y_in;
+                j["keyframes"][i]["inter_y_out"] = f.keyframes[i].inter_y_out;
+            }
+            j["value"] = f.value;
+            j["mode"] = f.mode;
+            if(f.script != -1)
+                j["script"] = s.scripts[f.script].name;
         }
-        j["value"] = f.value;
-        j["mode"] = f.mode;
-        if(f.script != -1)
-            j["script"] = s.scripts[f.script].name;
+        catch (std::exception e) {
+            std::cout << "Could not convert float!" << std::endl;
+        }
     }
     void animatedVectorToJson(AnimatedFloatVec3 f, Scene& s, json& j) {
         animatedFloatToJson(f[0], s, j[0]);
@@ -106,22 +112,27 @@ namespace Scene {
 
     AnimatedFloat jsonToAnimatedFloat(json& j, Scene &s) {
         AnimatedFloat f;
-        for (int i = 0; i < j["keyframes"].size(); i++) {
-            f.AddKeyframe(j["keyframes"][i]["frame"], j["keyframes"][i]["value"], j["keyframes"][i]["inter_x_in"], j["keyframes"][i]["inter_x_out"], j["keyframes"][i]["inter_y_in"], j["keyframes"][i]["inter_y_out"]);
-        }
-        f.value = j["value"];
-        f.mode = j["mode"];
-        int index = -1;
-        if (j.contains("script")) {
-            for (int i = 0; i < s.scripts.size(); i++) {
-                if (s.scripts[i].name == j["script"]) {
-                    index = i;
-                    break;
-                }
+        try {
+            for (int i = 0; i < j["keyframes"].size(); i++) {
+                f.AddKeyframe(j["keyframes"][i]["frame"], j["keyframes"][i]["value"], j["keyframes"][i]["inter_x_in"], j["keyframes"][i]["inter_x_out"], j["keyframes"][i]["inter_y_in"], j["keyframes"][i]["inter_y_out"]);
             }
-            
+            f.value = j["value"];
+            f.mode = j["mode"];
+            int index = -1;
+            if (j.contains("script")) {
+                for (int i = 0; i < s.scripts.size(); i++) {
+                    if (s.scripts[i].name == j["script"]) {
+                        index = i;
+                        break;
+                    }
+                }
+
+            }
+            f.script = index;
         }
-        f.script = index;
+        catch (std::exception e) {
+            std::cout << "Could not load float: " << j << std::endl;
+        }
         
         return f;
     }
@@ -196,6 +207,11 @@ namespace Scene {
         j["globals"] = globals;
         animatedVectorToJson(scene.cam_pos, scene, j["camera"]["cam_pos"]);
         animatedVector2ToJson(scene.cam_py, scene, j["camera"]["cam_py"]);
+
+        animatedFloatToJson(scene.cam_data.apeture_size, scene, j["camera"]["apeture_size"]);
+        animatedFloatToJson(scene.cam_data.focal_length, scene, j["camera"]["focal_length"]);
+        animatedFloatToJson(scene.cam_data.focus_dist, scene, j["camera"]["focus_dist"]);
+
         return j.dump();
     }
 
@@ -221,6 +237,9 @@ namespace Scene {
 
         s.cam_pos = jsonToAnimatedVector3(j["camera"]["cam_pos"], s);
         s.cam_py = jsonToAnimatedVector2(j["camera"]["cam_py"], s);
+        s.cam_data.apeture_size = jsonToAnimatedFloat(j["camera"]["apeture_size"], s);
+        s.cam_data.focal_length = jsonToAnimatedFloat(j["camera"]["focal_length"], s);
+        s.cam_data.focus_dist = jsonToAnimatedFloat(j["camera"]["focus_dist"], s);
         for (int i = 0; i < j["objects"].size(); i++) {
             json jo = j["objects"][i];
             SceneObject o;
@@ -287,6 +306,8 @@ namespace Scene {
             s.globals.push_back(g);
         }
 
+        
+
         return s;
     }
 
@@ -321,6 +342,7 @@ namespace Scene {
 
         d.cam_pos = scene.cam_pos;
         d.cam_py = scene.cam_py;
+        d.cam_data = scene.cam_data;
 
         for (int i = 0; i < scene.objects.size(); i++) {
             Primitive::ShaderPrimitive p;

@@ -10,8 +10,9 @@ uniform int total_samples;
 uniform int samples;
 uniform int current_sample;
 
-uniform float fp_dist;
-uniform float lens_size;
+uniform float focus_dist;
+uniform float focal_length;
+uniform float apeture_size;
 
 float PHI = 1.61803398874989484820459;  // Φ = Golden Ratio   
 
@@ -482,9 +483,9 @@ vec4 run(vec2 uvOrig)
 
     float seed = float(baseHash(uvec2(uvOrig.x * 4392932 + gl_GlobalInvocationID.y, uvOrig.y * 2039192 + gl_GlobalInvocationID.x)))/float(0xffffffffU) + t;
 
-    vec3 rayDir = vec3(uv.x, uv.y, -1.);
-    vec3 rayOri = vec3(randomInUnitDisk(seed) * lens_size, 0.0);
-    rayDir = normalize((rayDir * fp_dist) - (rayOri));
+    vec3 rayDir = normalize(vec3(uv.x, uv.y, -focal_length));
+    vec3 rayOri = (vec4(randomInUnitDisk(seed), 0.0, 0.0)).xyz * apeture_size;
+    rayDir = normalize((rayDir * focus_dist) - (rayOri));
 
     rayDir = (vec4(rayDir, 0.0) * camera_rot).xyz;
 
@@ -496,7 +497,7 @@ vec4 run(vec2 uvOrig)
     //vec3 camPos = vec3(-2., -2., -4.);
 
     // simple camera
-    ray r = ray(rayOri + camera_pos, rayDir);
+    ray r = ray((vec4(rayOri, 0.0) * camera_rot).xyz + camera_pos, rayDir);
 
 
     RayMarchResult dist = rayMarchFull(r);
@@ -507,10 +508,12 @@ vec4 run(vec2 uvOrig)
     color *= vec3(dif) * .5;
     if (dist.hit) {
         color = max(color, vec3(0.12, 0.12, 0.12));
+        
     }
     else {
         color = vec3(0.1, 0.1, 0.1);
     }
+
 
     // Output to screen
     return vec4(color.xyz, 1.0);
@@ -543,10 +546,10 @@ void main() {
             gold_noise(vec2(gl_GlobalInvocationID.xy) + vec2(6.7, 7.8), t + 0.2),
             0.0
         ) / total_samples;*/
-        cur += (run(vec2(float(texelCoord.x) / u_resolution.x, float(texelCoord.y) / u_resolution.y)) * gold_noise(vec2(gl_GlobalInvocationID.xy) + vec2(6.7, 7.8), t)) / total_samples;
+        //cur += (run(vec2(float(texelCoord.x) / u_resolution.x, float(texelCoord.y) / u_resolution.y)) * gold_noise(vec2(gl_GlobalInvocationID.xy) + vec2(6.7, 7.8), t)) / total_samples;
         //cur += primitives[0].prim_type;
         //cur += group_modifier[0].prim1 / total_samples;
-        //cur += run(vec2(float(texelCoord.x) / u_resolution.x, float(texelCoord.y) / u_resolution.y)) / total_samples;
+        cur += run(vec2(float(texelCoord.x) / u_resolution.x, float(texelCoord.y) / u_resolution.y)) / total_samples;
         //cur += vec4(0.2, 0.2, 0.2, 0.0) / total_samples;
     }
 

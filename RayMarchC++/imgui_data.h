@@ -181,6 +181,20 @@ namespace RMImGui {
         }
     };
 
+    struct CameraData {
+
+        AnimatedFloat apeture_size = 0.f, focus_dist = 1.f, focal_length = 1.f;
+
+        void Recalculate(int frame, std::vector<AnimatedFloat*>* vec) {
+            if (apeture_size.Recalculate(frame))
+                vec->push_back(&apeture_size);
+            if (focus_dist.Recalculate(frame))
+                vec->push_back(&focus_dist);
+            if (focal_length.Recalculate(frame))
+                vec->push_back(&focal_length);
+        }
+    };
+
     struct ImGuiData {
         int* shading_mode;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
@@ -201,8 +215,7 @@ namespace RMImGui {
         std::vector<ScriptData> scripts = std::vector<ScriptData>();
         std::vector<GlobalVariable> globals = std::vector<GlobalVariable>();
         //std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
-
-        float focusPlane, lensSize;
+        CameraData cam_data;
 
         int addWindow(AnimatedFloat* f, std::string name) {
             for (int i = 0; i < windows.size(); i++) {
@@ -319,6 +332,8 @@ namespace RMImGui {
             }
             cam_pos.Recalculate(frame, &vec);
             cam_py.Recalculate(frame, &vec);
+
+            cam_data.Recalculate(frame, &vec);
 
             for (auto p : vec) {
                 if (p->script != -1) {

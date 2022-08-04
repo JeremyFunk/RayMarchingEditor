@@ -12,8 +12,9 @@ namespace Shader {
 
 	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program) {
 		ComputeShaderUniforms u;
-		u.lens_size = LoadUniform(program, "lens_size");
-		u.fp_dist = LoadUniform(program, "fp_dist");
+		u.apeture_size = LoadUniform(program, "apeture_size");
+		u.focal_length = LoadUniform(program, "focal_length");
+		u.focus_dist = LoadUniform(program, "focus_dist");
 
 		u.offsetX = LoadUniform(program, "xOffset");
 		u.offsetY = LoadUniform(program, "yOffset");
@@ -56,9 +57,10 @@ namespace Shader {
 		return u;
 	}
 
-	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, float lens_size, float fp_dist) {
-		glUniform1f(uniforms.lens_size, lens_size);
-		glUniform1f(uniforms.fp_dist, fp_dist);
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, RMImGui::CameraData cam_data) {
+		glUniform1f(uniforms.focal_length, cam_data.focal_length.value);
+		glUniform1f(uniforms.focus_dist, cam_data.focus_dist.value);
+		glUniform1f(uniforms.apeture_size, cam_data.apeture_size.value);
 
 		glUniform1f(uniforms.offsetX, offsetX);
 		glUniform1f(uniforms.offsetY, offsetY);

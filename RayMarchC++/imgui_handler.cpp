@@ -568,6 +568,7 @@ namespace RMImGui {
 					data.cam_py = im.cam_py;
 					data.project_path = RMIO::PathGetDirectoryPart(file.path);
 					data.scripts = im.scripts;
+					data.cam_data = im.cam_data;
 					for (int i = 0; i < data.scripts.size(); i++) {
 						data.scripts[i].compile();
 					}
@@ -621,6 +622,7 @@ namespace RMImGui {
 					data.scripts[i].compile();
 				}
 				data.recalculate = true;
+				data.cam_data = im.cam_data;
 			}
 			RMIO::SetupProjectDirectories(file.path);
 		}
@@ -657,12 +659,9 @@ namespace RMImGui {
 
 		ImGui::Begin("Debug");
 
-		if (ImGui::SliderFloat("Focus Plane", &data.focusPlane, 0.f, 40.f)) {
-			data.recalculate = true;
-		}
-		if (ImGui::SliderFloat("Lens Size", &data.lensSize, 0.f, 2.f)) {
-			data.recalculate = true;
-		}
+		ImGui::KeyframeDragFloat(&data, "Camera->Focal length", "Focal length", data.timeline.frame, &data.cam_data.focal_length, 0.01f, 0.f, 20.f);
+		ImGui::KeyframeDragFloat(&data, "Camera->Focus distance", "Focus distance", data.timeline.frame, &data.cam_data.focus_dist, 0.01f, 0.f, 20.f);
+		ImGui::KeyframeDragFloat(&data, "Camera->Apeture size", "Apeture size", data.timeline.frame, &data.cam_data.apeture_size, 0.01f, 0.f, 20.f);
 
 		ImGui::End();
 

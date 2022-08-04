@@ -42,6 +42,7 @@ namespace Scene {
         std::vector<SceneGroupModifier> group_modifiers = std::vector<SceneGroupModifier>();
         std::vector<SceneScript> scripts = std::vector<SceneScript>();
         std::string directory;
+        RMImGui::CameraData cam_data;
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py; 
         std::vector<SceneGlobal> globals = std::vector<SceneGlobal>();

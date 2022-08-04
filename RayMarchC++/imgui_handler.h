@@ -6,7 +6,6 @@
 #include "constants.h"
 #include "imgui_data.h"
 namespace RMImGui {
-
     void SetupImGui(GLFWwindow* window);
     void RenderImGui(ImGuiData& data);
 }

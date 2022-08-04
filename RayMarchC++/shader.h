@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <vector>
 #include "primitive.h"
+#include "imgui_data.h"
 namespace Shader {
 
 	struct SSBOModifier {
@@ -70,7 +71,7 @@ namespace Shader {
 		GLuint shading_mode;
 		GLuint render_cam;
 		GLuint u_prim_count, u_group_count;
-		GLuint lens_size, fp_dist;
+		GLuint apeture_size, focus_dist, focal_length;
 	};
 
 	GLuint LoadUniform(const GLuint program, const char* uniform);
@@ -84,5 +85,5 @@ namespace Shader {
 
 	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms);
 	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples);
-	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, float lens_size, float fp_dist);
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, RMImGui::CameraData cam_data);
 }
