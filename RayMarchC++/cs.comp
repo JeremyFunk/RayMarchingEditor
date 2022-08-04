@@ -321,7 +321,7 @@ DistanceResult getDist(vec3 pt, int full) {
         int found = 0;
 
         if (full == 1) {
-            for (int j = 0; j < u_group_count; j++) {
+            for (int j = 0; j < group_modifier.length(); j++) {
                 if (group_modifier[j].modifier != 0 && (group_modifier[j].prim0 == i || group_modifier[j].prim1 == i || group_modifier[j].prim2 == i || group_modifier[j].prim3 == i)) {
                     float de_cur = op(de[group_modifier[j].prim0], de[group_modifier[j].prim1], group_modifier[j]);
 

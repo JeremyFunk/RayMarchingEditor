@@ -23,42 +23,10 @@ namespace Shader {
 		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
 		u.u_prim_count = LoadUniform(program, "u_prim_count");
+		u.u_group_count = LoadUniform(program, "u_group_count");
 		u.camera_pos_render = LoadUniform(program, "camera_pos_render");
 		u.render_cam = LoadUniform(program, "render_cam");
 		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
-		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
-			u.u_group_modifier[i].modifier = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].modifier").c_str());
-			u.u_group_modifier[i].primAttribute = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].primAttribute").c_str());
-			u.u_group_modifier[i].prim0 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim0").c_str());
-			u.u_group_modifier[i].prim1 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim1").c_str());
-			u.u_group_modifier[i].prim2 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim2").c_str());
-			u.u_group_modifier[i].prim3 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim3").c_str());
-		}
-
-		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
-			u.primitives[i].prim_type = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].prim_type").c_str());
-			u.primitives[i].position = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].position").c_str());
-			u.primitives[i].transformation = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].transformation").c_str());
-			u.primitives[i].attribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute0").c_str());
-			u.primitives[i].attribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute1").c_str());
-			u.primitives[i].attribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute2").c_str());
-			u.primitives[i].attribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute3").c_str());
-			u.primitives[i].attribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute4").c_str());
-			u.primitives[i].attribute5 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute5").c_str());
-			u.primitives[i].attribute6 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute6").c_str());
-			u.primitives[i].attribute7 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute7").c_str());
-			u.primitives[i].attribute8 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute8").c_str());
-			u.primitives[i].attribute9 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute9").c_str());
-
-			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
-				u.primitives[i].modifiers[j].modifier = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifier").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute0").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute1").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute2").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute3").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute4").c_str());
-			}
-		}
 		return u;
 	}
 
@@ -78,46 +46,14 @@ namespace Shader {
 		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
 		u.u_prim_count = LoadUniform(program, "u_prim_count");
+		u.u_group_count = LoadUniform(program, "u_group_count");
 		u.camera_pos_render = LoadUniform(program, "camera_pos_render");
 		u.render_cam = LoadUniform(program, "render_cam");
 		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
-		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
-			u.u_group_modifier[i].modifier = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].modifier").c_str());
-			u.u_group_modifier[i].primAttribute = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].primAttribute").c_str());
-			u.u_group_modifier[i].prim0 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim0").c_str());
-			u.u_group_modifier[i].prim1 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim1").c_str());
-			u.u_group_modifier[i].prim2 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim2").c_str());
-			u.u_group_modifier[i].prim3 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim3").c_str());
-		}
-
-		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
-			u.primitives[i].prim_type = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].prim_type").c_str());
-			u.primitives[i].position = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].position").c_str());
-			u.primitives[i].transformation = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].transformation").c_str());
-			u.primitives[i].attribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute0").c_str());
-			u.primitives[i].attribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute1").c_str());
-			u.primitives[i].attribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute2").c_str());
-			u.primitives[i].attribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute3").c_str());
-			u.primitives[i].attribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute4").c_str());
-			u.primitives[i].attribute5 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute5").c_str());
-			u.primitives[i].attribute6 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute6").c_str());
-			u.primitives[i].attribute7 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute7").c_str());
-			u.primitives[i].attribute8 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute8").c_str());
-			u.primitives[i].attribute9 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute9").c_str());
-
-			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
-				u.primitives[i].modifiers[j].modifier = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifier").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute0").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute1").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute2").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute3").c_str());
-				u.primitives[i].modifiers[j].modifierAttribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute4").c_str());
-			}
-		}
 		return u;
 	}
 
-	void PrepareComputeShader(const ComputeShaderUniforms uniforms, const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample) {
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample) {
 		glUniform1f(uniforms.offsetX, offsetX);
 		glUniform1f(uniforms.offsetY, offsetY);
 		glUniform1f(uniforms.t, t);
@@ -126,47 +62,6 @@ namespace Shader {
 		glUniform1i(uniforms.current_sample, current_sample);
 		glUniform1i(uniforms.u_prim_count, prim_count);
 		glUniform1i(uniforms.u_group_count, mod_count);
-		
-		/*for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
-			glUniform1i(uniforms.u_group_modifier[i].modifier, modifiers[i].modifier);
-			glUniform1i(uniforms.u_group_modifier[i].prim0, modifiers[i].prim0);
-			glUniform1i(uniforms.u_group_modifier[i].prim1, modifiers[i].prim1);
-			glUniform1i(uniforms.u_group_modifier[i].prim2, modifiers[i].prim2);
-			glUniform1i(uniforms.u_group_modifier[i].prim3, modifiers[i].prim3);
-			glUniform1f(uniforms.u_group_modifier[i].primAttribute, modifiers[i].primAttribute.value);
-		}
-
-		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
-			auto v = &primitives[i];
-
-			if (v->prim_type == 0) {
-				glUniform1i(uniforms.primitives[i].prim_type, 0);
-				continue;
-			}
-			glUniformMatrix3fv(uniforms.primitives[i].transformation, 1, GL_FALSE, &(*v).transformation.matrix[0][0]);
-
-			glUniform1i(uniforms.primitives[i].prim_type, (*v).prim_type);
-			glUniform3f(uniforms.primitives[i].position, (*v).transformation.position[0].value, (*v).transformation.position[1].value, (*v).transformation.position[2].value);
-			glUniform1f(uniforms.primitives[i].attribute0, (*v).values[0].value);
-			glUniform1f(uniforms.primitives[i].attribute1, (*v).values[1].value);
-			glUniform1f(uniforms.primitives[i].attribute2, (*v).values[2].value);
-			glUniform1f(uniforms.primitives[i].attribute3, (*v).values[3].value);
-			glUniform1f(uniforms.primitives[i].attribute4, (*v).values[4].value);
-			glUniform1f(uniforms.primitives[i].attribute5, (*v).values[5].value);
-			glUniform1f(uniforms.primitives[i].attribute6, (*v).values[6].value);
-			glUniform1f(uniforms.primitives[i].attribute7, (*v).values[7].value);
-			glUniform1f(uniforms.primitives[i].attribute8, (*v).values[8].value);
-			glUniform1f(uniforms.primitives[i].attribute9, (*v).values[9].value);
-
-			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
-				glUniform1i(uniforms.primitives[i].modifiers[j].modifier, (*v).modifiers[j].modifier);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute0, (*v).modifiers[j].attribute0.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute1, (*v).modifiers[j].attribute1.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute2, (*v).modifiers[j].attribute2.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute3, (*v).modifiers[j].attribute3.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute4, (*v).modifiers[j].attribute4.value);
-			}
-		}*/
 	}
 
 	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples) {
@@ -174,49 +69,10 @@ namespace Shader {
 		glUniform1i(uniforms.total_samples, total_samples);
 	}
 
-	void PrepareShader(const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms)
+	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms)
 	{
 		glUniform1i(uniforms.u_prim_count, prim_count);
-		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
-			glUniform1i(uniforms.u_group_modifier[i].modifier, modifiers[i].modifier);
-			glUniform1i(uniforms.u_group_modifier[i].prim0, modifiers[i].prim0);
-			glUniform1i(uniforms.u_group_modifier[i].prim1, modifiers[i].prim1);
-			glUniform1i(uniforms.u_group_modifier[i].prim2, modifiers[i].prim2);
-			glUniform1i(uniforms.u_group_modifier[i].prim3, modifiers[i].prim3);
-			glUniform1f(uniforms.u_group_modifier[i].primAttribute, modifiers[i].primAttribute.value);
-		}
-
-		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
-			auto v = &primitives[i];
-
-			if (v->prim_type == 0) {
-				glUniform1i(uniforms.primitives[i].prim_type, 0);
-				continue;
-			}
-			glUniformMatrix3fv(uniforms.primitives[i].transformation, 1, GL_FALSE, &(*v).transformation.matrix[0][0]);
-
-			glUniform1i(uniforms.primitives[i].prim_type, (*v).prim_type);
-			glUniform3f(uniforms.primitives[i].position, (*v).transformation.position[0].value, (*v).transformation.position[1].value, (*v).transformation.position[2].value);
-			glUniform1f(uniforms.primitives[i].attribute0, (*v).values[0].value);
-			glUniform1f(uniforms.primitives[i].attribute1, (*v).values[1].value);
-			glUniform1f(uniforms.primitives[i].attribute2, (*v).values[2].value);
-			glUniform1f(uniforms.primitives[i].attribute3, (*v).values[3].value);
-			glUniform1f(uniforms.primitives[i].attribute4, (*v).values[4].value);
-			glUniform1f(uniforms.primitives[i].attribute5, (*v).values[5].value);
-			glUniform1f(uniforms.primitives[i].attribute6, (*v).values[6].value);
-			glUniform1f(uniforms.primitives[i].attribute7, (*v).values[7].value);
-			glUniform1f(uniforms.primitives[i].attribute8, (*v).values[8].value);
-			glUniform1f(uniforms.primitives[i].attribute9, (*v).values[9].value);
-
-			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
-				glUniform1i(uniforms.primitives[i].modifiers[j].modifier, (*v).modifiers[j].modifier);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute0, (*v).modifiers[j].attribute0.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute1, (*v).modifiers[j].attribute1.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute2, (*v).modifiers[j].attribute2.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute3, (*v).modifiers[j].attribute3.value);
-				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute4, (*v).modifiers[j].attribute4.value);
-			}
-		}
+		glUniform1i(uniforms.u_group_count, mod_count);
 	}
 
 

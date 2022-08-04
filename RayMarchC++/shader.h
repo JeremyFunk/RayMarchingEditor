@@ -43,52 +43,15 @@ namespace Shader {
 		GLint modifier;
 	};
 
-	struct GroupModifier {
-		GLuint modifier;
-		GLuint prim0;
-		GLuint prim1;
-		GLuint prim2;
-		GLuint prim3;
-		GLuint primAttribute;
-	};
-
-	struct Modifiers {
-		GLuint modifier;
-		GLuint modifierAttribute0;
-		GLuint modifierAttribute1;
-		GLuint modifierAttribute2;
-		GLuint modifierAttribute3;
-		GLuint modifierAttribute4;
-	};
-
-	struct PrimitiveUniforms {
-		GLuint prim_type;
-		GLuint transformation;
-		GLuint position;
-		GLuint attribute0;
-		GLuint attribute1;
-		GLuint attribute2;
-		GLuint attribute3;
-		GLuint attribute4;
-		GLuint attribute5;
-		GLuint attribute6;
-		GLuint attribute7;
-		GLuint attribute8;
-		GLuint attribute9;
-		Modifiers modifiers[3];
-	};
-
 	struct ShaderUniforms {
 		GLuint camera_pos;
 		GLuint camera_rot;
 		GLuint u_resolution;
 		GLuint shading_mode;
 		GLuint render_cam;
-		GLuint u_prim_count; 
+		GLuint u_prim_count, u_group_count;
 		GLuint camera_pos_render;
 		GLuint camera_dir_render;
-		PrimitiveUniforms primitives[COUNT_PRIMITIVE];
-		GroupModifier u_group_modifier[COUNT_GROUP_MODIFIER];
 	};
 
 	struct ComputeShaderFragmentUniforms {
@@ -101,8 +64,6 @@ namespace Shader {
 		GLuint offsetX, offsetY, t, samples, total_samples, current_sample;
 		GLuint camera_pos_render; 
 		GLuint camera_dir_render; 
-		PrimitiveUniforms primitives[COUNT_PRIMITIVE];
-		GroupModifier u_group_modifier[COUNT_GROUP_MODIFIER];
 		GLuint camera_pos;
 		GLuint camera_rot;
 		GLuint u_resolution;
@@ -120,7 +81,7 @@ namespace Shader {
 	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program);
 	ComputeShaderFragmentUniforms LoadComputeShaderFragmentUniforms(const GLuint program);
 
-	void PrepareShader(const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms);
+	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms);
 	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples);
-	void PrepareComputeShader(const ComputeShaderUniforms uniforms, const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample);
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample);
 }

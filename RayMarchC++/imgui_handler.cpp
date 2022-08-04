@@ -571,7 +571,9 @@ namespace RMImGui {
 					for (int i = 0; i < data.scripts.size(); i++) {
 						data.scripts[i].compile();
 					}
+					data.recalculate = true;
 				}
+				
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S") || ImGui::MenuItem("Save As", "Ctrl+Shift+S")) {
 				auto file = RMIO::ExplorerSaveFile();
@@ -618,6 +620,7 @@ namespace RMImGui {
 				for (int i = 0; i < data.scripts.size(); i++) {
 					data.scripts[i].compile();
 				}
+				data.recalculate = true;
 			}
 			RMIO::SetupProjectDirectories(file.path);
 		}
