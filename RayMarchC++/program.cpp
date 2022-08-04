@@ -191,7 +191,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			cam_mode = 1;
 		}
 	}
-	if (key == GLFW_KEY_0 && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_APOSTROPHE && action == GLFW_RELEASE) {
 		enteredCam = true;
 		moved = true;
 		update_camera();
@@ -364,7 +364,7 @@ int main()
 
 	int TEXTURE_WIDTH = screen_width, TEXTURE_HEIGHT = screen_height;
 	int TILE_WIDTH = screen_width, TILE_HEIGHT = screen_height;
-	int SAMPLES = 32;
+	int SAMPLES = 256;
 	int SAMPLES_PER_ITER = 1;
 	int render_sample = 0;
 	int render_tile_x = 0;
@@ -570,7 +570,7 @@ int main()
 				
 				if (render_sample < SAMPLES) {
 					if (render_sample < SAMPLES) {
-						Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample);
+						Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample, data.lensSize, data.focusPlane);
 						glDispatchCompute(
 							ceil((unsigned int)std::min(TILE_WIDTH, TEXTURE_WIDTH - render_tile_x * TILE_WIDTH) / 8),
 							ceil((unsigned int)std::min(TILE_HEIGHT, TEXTURE_HEIGHT - render_tile_y * TILE_HEIGHT) / 4),
@@ -648,8 +648,8 @@ int main()
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4); // 3 indices starting at 0 -> 1 triangle
 			glFinish(); 
 			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
-			if (ms != 0)
-				std::cout << ms << "ms\n";
+			/*if (ms != 0)
+				std::cout << ms << "ms\n";*/
 			glDisableVertexAttribArray(0);
 			glDisableVertexAttribArray(1);
 

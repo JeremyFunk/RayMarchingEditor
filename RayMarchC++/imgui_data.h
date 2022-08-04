@@ -202,6 +202,8 @@ namespace RMImGui {
         std::vector<GlobalVariable> globals = std::vector<GlobalVariable>();
         //std::vector<ScriptWindow> open_scripts = std::vector<ScriptWindow>();
 
+        float focusPlane, lensSize;
+
         int addWindow(AnimatedFloat* f, std::string name) {
             for (int i = 0; i < windows.size(); i++) {
                 if (windows[i].f == f) {

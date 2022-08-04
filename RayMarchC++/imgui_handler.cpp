@@ -655,6 +655,17 @@ namespace RMImGui {
 		DisplayEngine(data);
 		ImGui::End();
 
+		ImGui::Begin("Debug");
+
+		if (ImGui::SliderFloat("Focus Plane", &data.focusPlane, 0.f, 40.f)) {
+			data.recalculate = true;
+		}
+		if (ImGui::SliderFloat("Lens Size", &data.lensSize, 0.f, 2.f)) {
+			data.recalculate = true;
+		}
+
+		ImGui::End();
+
 
 		auto windows = std::vector<AnimationWindow>();
 		for (int i = 0; i < data.windows.size(); i++) {

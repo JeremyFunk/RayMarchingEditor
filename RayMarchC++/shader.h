@@ -70,6 +70,7 @@ namespace Shader {
 		GLuint shading_mode;
 		GLuint render_cam;
 		GLuint u_prim_count, u_group_count;
+		GLuint lens_size, fp_dist;
 	};
 
 	GLuint LoadUniform(const GLuint program, const char* uniform);
@@ -83,5 +84,5 @@ namespace Shader {
 
 	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms);
 	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples);
-	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample);
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, float lens_size, float fp_dist);
 }
