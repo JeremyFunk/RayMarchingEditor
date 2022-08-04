@@ -291,6 +291,22 @@ namespace RMImGui {
             return d;
         }
 
+        int primCount() {
+            for (int i = 0; i < COUNT_PRIMITIVE; i++) {
+                if (primitives[i].prim_type == 0) {
+                    return i;
+                }
+            }
+        }
+
+        int groupModifierCount() {
+            for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+                if (groupPrimitives[i].modifier == 0) {
+                    return i;
+                }
+            }
+        }
+
         void animate(int frame) {
             auto vec = std::vector<AnimatedFloat*>();
             for (int i = 0; i < COUNT_PRIMITIVE; i++) {

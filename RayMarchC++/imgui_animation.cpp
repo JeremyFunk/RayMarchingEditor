@@ -775,6 +775,7 @@ namespace RMImGui {
 			}
 			else if (data.drag == DragStart::TopBar) {
 				data.timeline.frame = std::round((transformed_pos.x / timeline_step_width) - data.timeline.offset / timeline_step_width);
+				data.recalculate = true;
 			}
 			else if (data.drag == DragStart::KeyframeBarFrame) {
 				cursor = ImGuiMouseCursor_ResizeEW;

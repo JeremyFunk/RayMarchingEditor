@@ -3,21 +3,27 @@
 #include <fstream>
 #include <string>
 #include "constants.h"
+#include <imgui.h>
 
 namespace Shader {
 	GLuint LoadUniform(const GLuint program, const char* uniform) {
 		return glGetUniformLocation(program, uniform);
 	}
 
-	ShaderUniforms LoadUniforms(const GLuint program) {
-		ShaderUniforms u;
+	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program) {
+		ComputeShaderUniforms u;
+		u.offsetX = LoadUniform(program, "xOffset");
+		u.offsetY = LoadUniform(program, "yOffset");
+		u.t = LoadUniform(program, "t");
+		u.total_samples = LoadUniform(program, "total_samples");
+		u.samples = LoadUniform(program, "samples");
+		u.current_sample = LoadUniform(program, "current_sample");
 		u.camera_pos = LoadUniform(program, "camera_pos");
 		u.camera_rot = LoadUniform(program, "camera_rot");
 		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
 		u.u_prim_count = LoadUniform(program, "u_prim_count");
-		u.u_texture = LoadUniform(program, "u_texture");
-		u.camera_pos_render = LoadUniform(program, "camera_pos_render"); 
+		u.camera_pos_render = LoadUniform(program, "camera_pos_render");
 		u.render_cam = LoadUniform(program, "render_cam");
 		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
 		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
@@ -56,9 +62,121 @@ namespace Shader {
 		return u;
 	}
 
-	void PrepareShader(const Primitive::ShaderPrimitive primitives[], const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms)
-	{
+	ComputeShaderFragmentUniforms LoadComputeShaderFragmentUniforms(const GLuint program) {
+		ComputeShaderFragmentUniforms u;
+		u.u_texture = LoadUniform(program, "u_texture");
+		u.total_samples = LoadUniform(program, "total_samples");
+		u.samples = LoadUniform(program, "samples");
+		u.u_resolution = LoadUniform(program, "u_resolution");
+		return u;
+	}
 
+	ShaderUniforms LoadUniforms(const GLuint program) {
+		ShaderUniforms u;
+		u.camera_pos = LoadUniform(program, "camera_pos");
+		u.camera_rot = LoadUniform(program, "camera_rot");
+		u.shading_mode = LoadUniform(program, "shading_mode");
+		u.u_resolution = LoadUniform(program, "u_resolution");
+		u.u_prim_count = LoadUniform(program, "u_prim_count");
+		u.camera_pos_render = LoadUniform(program, "camera_pos_render");
+		u.render_cam = LoadUniform(program, "render_cam");
+		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
+		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+			u.u_group_modifier[i].modifier = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].modifier").c_str());
+			u.u_group_modifier[i].primAttribute = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].primAttribute").c_str());
+			u.u_group_modifier[i].prim0 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim0").c_str());
+			u.u_group_modifier[i].prim1 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim1").c_str());
+			u.u_group_modifier[i].prim2 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim2").c_str());
+			u.u_group_modifier[i].prim3 = LoadUniform(program, std::string("u_group_modifier[" + std::to_string(i) + "].prim3").c_str());
+		}
+
+		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
+			u.primitives[i].prim_type = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].prim_type").c_str());
+			u.primitives[i].position = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].position").c_str());
+			u.primitives[i].transformation = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].transformation").c_str());
+			u.primitives[i].attribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute0").c_str());
+			u.primitives[i].attribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute1").c_str());
+			u.primitives[i].attribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute2").c_str());
+			u.primitives[i].attribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute3").c_str());
+			u.primitives[i].attribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute4").c_str());
+			u.primitives[i].attribute5 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute5").c_str());
+			u.primitives[i].attribute6 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute6").c_str());
+			u.primitives[i].attribute7 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute7").c_str());
+			u.primitives[i].attribute8 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute8").c_str());
+			u.primitives[i].attribute9 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].attribute9").c_str());
+
+			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
+				u.primitives[i].modifiers[j].modifier = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifier").c_str());
+				u.primitives[i].modifiers[j].modifierAttribute0 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute0").c_str());
+				u.primitives[i].modifiers[j].modifierAttribute1 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute1").c_str());
+				u.primitives[i].modifiers[j].modifierAttribute2 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute2").c_str());
+				u.primitives[i].modifiers[j].modifierAttribute3 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute3").c_str());
+				u.primitives[i].modifiers[j].modifierAttribute4 = LoadUniform(program, std::string("u_primitives[" + std::to_string(i) + "].modifiers[" + std::to_string(j) + "].modifierAttribute4").c_str());
+			}
+		}
+		return u;
+	}
+
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample) {
+		glUniform1f(uniforms.offsetX, offsetX);
+		glUniform1f(uniforms.offsetY, offsetY);
+		glUniform1f(uniforms.t, t);
+		glUniform1i(uniforms.samples, samples);
+		glUniform1i(uniforms.total_samples, total_samples);
+		glUniform1i(uniforms.current_sample, current_sample);
+		glUniform1i(uniforms.u_prim_count, prim_count);
+		glUniform1i(uniforms.u_group_count, mod_count);
+		
+		/*for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
+			glUniform1i(uniforms.u_group_modifier[i].modifier, modifiers[i].modifier);
+			glUniform1i(uniforms.u_group_modifier[i].prim0, modifiers[i].prim0);
+			glUniform1i(uniforms.u_group_modifier[i].prim1, modifiers[i].prim1);
+			glUniform1i(uniforms.u_group_modifier[i].prim2, modifiers[i].prim2);
+			glUniform1i(uniforms.u_group_modifier[i].prim3, modifiers[i].prim3);
+			glUniform1f(uniforms.u_group_modifier[i].primAttribute, modifiers[i].primAttribute.value);
+		}
+
+		for (int i = 0; i < COUNT_PRIMITIVE; i++) {
+			auto v = &primitives[i];
+
+			if (v->prim_type == 0) {
+				glUniform1i(uniforms.primitives[i].prim_type, 0);
+				continue;
+			}
+			glUniformMatrix3fv(uniforms.primitives[i].transformation, 1, GL_FALSE, &(*v).transformation.matrix[0][0]);
+
+			glUniform1i(uniforms.primitives[i].prim_type, (*v).prim_type);
+			glUniform3f(uniforms.primitives[i].position, (*v).transformation.position[0].value, (*v).transformation.position[1].value, (*v).transformation.position[2].value);
+			glUniform1f(uniforms.primitives[i].attribute0, (*v).values[0].value);
+			glUniform1f(uniforms.primitives[i].attribute1, (*v).values[1].value);
+			glUniform1f(uniforms.primitives[i].attribute2, (*v).values[2].value);
+			glUniform1f(uniforms.primitives[i].attribute3, (*v).values[3].value);
+			glUniform1f(uniforms.primitives[i].attribute4, (*v).values[4].value);
+			glUniform1f(uniforms.primitives[i].attribute5, (*v).values[5].value);
+			glUniform1f(uniforms.primitives[i].attribute6, (*v).values[6].value);
+			glUniform1f(uniforms.primitives[i].attribute7, (*v).values[7].value);
+			glUniform1f(uniforms.primitives[i].attribute8, (*v).values[8].value);
+			glUniform1f(uniforms.primitives[i].attribute9, (*v).values[9].value);
+
+			for (int j = 0; j < COUNT_PRIMITIVE_MODIFIER; j++) {
+				glUniform1i(uniforms.primitives[i].modifiers[j].modifier, (*v).modifiers[j].modifier);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute0, (*v).modifiers[j].attribute0.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute1, (*v).modifiers[j].attribute1.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute2, (*v).modifiers[j].attribute2.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute3, (*v).modifiers[j].attribute3.value);
+				glUniform1f(uniforms.primitives[i].modifiers[j].modifierAttribute4, (*v).modifiers[j].attribute4.value);
+			}
+		}*/
+	}
+
+	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples) {
+		glUniform1i(uniforms.samples, samples);
+		glUniform1i(uniforms.total_samples, total_samples);
+	}
+
+	void PrepareShader(const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms)
+	{
+		glUniform1i(uniforms.u_prim_count, prim_count);
 		for (int i = 0; i < COUNT_GROUP_MODIFIER; i++) {
 			glUniform1i(uniforms.u_group_modifier[i].modifier, modifiers[i].modifier);
 			glUniform1i(uniforms.u_group_modifier[i].prim0, modifiers[i].prim0);
@@ -102,6 +220,68 @@ namespace Shader {
 	}
 
 
+	GLuint LoadComputeShader(const char* compute_shader_file_path) {
+
+		// Create the shaders
+		GLuint ID = glCreateShader(GL_COMPUTE_SHADER);
+
+		// Read the Vertex Shader code from the file
+		std::string ComputeShaderCode;
+		std::ifstream ComputeShaderStream(compute_shader_file_path, std::ios::in);
+		if (ComputeShaderStream.is_open()) {
+			std::stringstream sstr;
+			sstr << ComputeShaderStream.rdbuf();
+			ComputeShaderCode = sstr.str();
+			ComputeShaderStream.close();
+		}
+		else {
+			printf("Cannot open %s!\n", compute_shader_file_path);
+			getchar();
+			return 0;
+		}
+
+		GLint Result = GL_FALSE;
+		int InfoLogLength;
+
+
+		// Compile Vertex Shader
+		printf("Compiling compute shader : %s\n", compute_shader_file_path);
+		char const* ComputeSourcePointer = ComputeShaderCode.c_str();
+		glShaderSource(ID, 1, &ComputeSourcePointer, NULL);
+		glCompileShader(ID);
+
+		// Check Vertex Shader
+		glGetShaderiv(ID, GL_COMPILE_STATUS, &Result);
+		glGetShaderiv(ID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+		if (InfoLogLength > 0) {
+			std::vector<char> ComputeShaderErrorMessage(InfoLogLength + 1);
+			glGetShaderInfoLog(ID, InfoLogLength, NULL, &ComputeShaderErrorMessage[0]);
+			printf("%s\n", &ComputeShaderErrorMessage[0]);
+		}
+
+
+		// Link the program
+		printf("Linking program\n");
+		GLuint ProgramID = glCreateProgram();
+		glAttachShader(ProgramID, ID);
+		glLinkProgram(ProgramID);
+
+		// Check the program
+		glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+		glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+		if (InfoLogLength > 0) {
+			std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+			glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
+			printf("%s\n", &ProgramErrorMessage[0]);
+		}
+
+
+		glDetachShader(ProgramID, ID);
+		glDeleteShader(ID);
+
+		return ProgramID;
+	}
+
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {
 
 		// Create the shaders
@@ -118,7 +298,7 @@ namespace Shader {
 			VertexShaderStream.close();
 		}
 		else {
-			printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+			printf("Cannot open %s!\n", vertex_file_path);
 			getchar();
 			return 0;
 		}

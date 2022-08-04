@@ -4,6 +4,45 @@
 #include <vector>
 #include "primitive.h"
 namespace Shader {
+
+	struct SSBOModifier {
+		GLfloat modifierAttribute0, modifierAttribute1, modifierAttribute2, modifierAttribute3, modifierAttribute4;
+		GLint modifier;
+	};
+
+	struct SSBOPrimitive {
+		GLfloat attribute0;
+		GLfloat attribute1;
+		GLfloat attribute2;
+		GLfloat attribute3;
+		GLfloat attribute4;
+		GLfloat attribute5;
+		SSBOModifier modifiers[3];
+		GLfloat m00;
+		GLfloat m01;
+		GLfloat m02;
+		GLfloat m03;
+		GLfloat m10;
+		GLfloat m11;
+		GLfloat m12;
+		GLfloat m13;
+		GLfloat m20;
+		GLfloat m21;
+		GLfloat m22;
+		GLfloat m23;
+		GLfloat position[3];
+		GLint prim_type;
+	};
+
+	struct SSBOGroupModifier {
+		GLint prim0;
+		GLint prim1;
+		GLint prim2;
+		GLint prim3;
+		GLfloat primAttribute;
+		GLint modifier;
+	};
+
 	struct GroupModifier {
 		GLuint modifier;
 		GLuint prim0;
@@ -45,16 +84,43 @@ namespace Shader {
 		GLuint u_resolution;
 		GLuint shading_mode;
 		GLuint render_cam;
-		GLuint u_prim_count;
-		GLuint u_texture;
-		GLuint camera_pos_render; 
-		GLuint camera_dir_render; 
-		PrimitiveUniforms primitives[20];
-		GroupModifier u_group_modifier[2];
+		GLuint u_prim_count; 
+		GLuint camera_pos_render;
+		GLuint camera_dir_render;
+		PrimitiveUniforms primitives[COUNT_PRIMITIVE];
+		GroupModifier u_group_modifier[COUNT_GROUP_MODIFIER];
 	};
 
-	ShaderUniforms LoadUniforms(const GLuint program);
+	struct ComputeShaderFragmentUniforms {
+		GLuint u_texture;
+		GLuint u_resolution;
+		GLuint samples, total_samples;
+	};
+
+	struct ComputeShaderUniforms {
+		GLuint offsetX, offsetY, t, samples, total_samples, current_sample;
+		GLuint camera_pos_render; 
+		GLuint camera_dir_render; 
+		PrimitiveUniforms primitives[COUNT_PRIMITIVE];
+		GroupModifier u_group_modifier[COUNT_GROUP_MODIFIER];
+		GLuint camera_pos;
+		GLuint camera_rot;
+		GLuint u_resolution;
+		GLuint shading_mode;
+		GLuint render_cam;
+		GLuint u_prim_count, u_group_count;
+	};
+
 	GLuint LoadUniform(const GLuint program, const char* uniform);
+
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
-	void PrepareShader(const Primitive::ShaderPrimitive primitives[], const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms);
+	GLuint LoadComputeShader(const char* compute_file_path);
+
+	ShaderUniforms LoadUniforms(const GLuint program);
+	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program);
+	ComputeShaderFragmentUniforms LoadComputeShaderFragmentUniforms(const GLuint program);
+
+	void PrepareShader(const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], ShaderUniforms uniforms);
+	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples);
+	void PrepareComputeShader(const ComputeShaderUniforms uniforms, const Primitive::ShaderPrimitive primitives[], int prim_count, const Primitive::ShaderGroupPrimitive modifiers[], int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample);
 }

@@ -144,7 +144,7 @@ namespace RMImGui {
 
 		}
 		else if (element->mod_count == index) {
-			if (ImGui::BeginCombo("##shading_mode", "Add Modifier")) {
+			if (ImGui::BeginCombo("##modifier", "Add Modifier")) {
 				if (ImGui::Selectable("Distort Modifier", true))
 					(*element).addDistortModifier(glm::vec3(0.0), 0.0, 0.0);
 				if (ImGui::Selectable("Twist Modifier", false))
@@ -289,7 +289,7 @@ namespace RMImGui {
 			if (p.modifier == 0) {
 				auto selected = "Modifier";
 
-				if (ImGui::BeginCombo("##shading_mode", selected)) {
+				if (ImGui::BeginCombo("##group_modifier", selected)) {
 					if (ImGui::Selectable("Union", false))
 						data->groupPrimitives[i] = Primitive::opUnion(0, 1);
 					if (ImGui::Selectable("Subtraction", false))
@@ -501,6 +501,8 @@ namespace RMImGui {
 				selected = "Normal Shading";
 			if (*data.shading_mode == 2)
 				selected = "Flat Shading";
+			if (*data.shading_mode == 3)
+				selected = "Render Shading";
 
 			if (ImGui::BeginCombo("##shading_mode", selected)) {
 				if (ImGui::Selectable("Light Shading", true))
@@ -509,6 +511,10 @@ namespace RMImGui {
 					*data.shading_mode = 1;
 				if (ImGui::Selectable("Flat Shading", false))
 					*data.shading_mode = 2;
+				if (ImGui::Selectable("Render Shading", false)) {
+					data.recalculate = true;
+					*data.shading_mode = 3;
+				}
 
 				ImGui::EndCombo();
 			}

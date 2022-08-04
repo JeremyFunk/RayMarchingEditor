@@ -52,7 +52,7 @@ bool enteredCam = false;
 
 float deltaTime = 0.0f;	
 float lastFrame = 0.0f;
-
+bool moved = false;
 
 int cam_mode = 0;
 
@@ -60,7 +60,7 @@ Camera camera(glm::vec3(0.0, 0.0, 3.0));
 static RMImGui::ImGuiData data;
 
 enum ShadingMode {
-	Light, Normal, Flat
+	Light, Normal, Flat, Render
 };
 
 int shading_mode = ShadingMode::Light;
@@ -76,6 +76,7 @@ void move() {
 	if (!data.reposition_cam) {
 		enteredCam = false;
 	}
+	moved = true;
 }
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
@@ -141,18 +142,27 @@ void processInput(GLFWwindow* window)
 
 }
 
-void update_camera() {
+bool update_camera() {
 	camera.Position = data.cam_pos.toVec();
 
 	//camera.Yaw = glm::degrees(atan2(data.cam_rot.x, data.cam_rot.z));
 	//camera.Pitch = glm::degrees(asin(-data.cam_rot.y));
 
+	auto front = vec3(camera.Front);
+	auto up = vec3(camera.Up);
+	auto right = vec3(camera.Right);
+	
+
 	camera.Yaw = data.cam_py[1].value;
 	camera.Pitch = data.cam_py[0].value;
 	camera.updateCameraVectors();
+
+	return camera.Front != front || camera.Up != up || camera.Right != right;
 }
 
-void update_render_camera() {
+bool update_render_camera() {
+	float old_cam_pos[] = { data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value };
+	float old_cam_py[] = { data.cam_py[0].value, data.cam_py[1].value, data.cam_py[2].value };
 	float pitchRadians = to_radians(camera.Pitch);
 	float yawRadians = to_radians(camera.Yaw);
 
@@ -167,6 +177,8 @@ void update_render_camera() {
 	data.cam_pos[2].value = camera.Position[2];
 	data.cam_py[0].value = camera.Pitch;
 	data.cam_py[1].value = camera.Yaw;
+
+	return old_cam_pos[0] != data.cam_pos[0].value || old_cam_pos[1] != data.cam_pos[1].value || old_cam_pos[2] != data.cam_pos[2].value || old_cam_py[0] != data.cam_py[0].value || old_cam_py[1] != data.cam_py[1].value;
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -181,6 +193,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 	if (key == GLFW_KEY_0 && action == GLFW_RELEASE) {
 		enteredCam = true;
+		moved = true;
 		update_camera();
 	}
 }
@@ -206,7 +219,7 @@ int setupWindow() {
 	}
 
 	glfwWindowHint(GLFW_SAMPLES, 1);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -276,9 +289,15 @@ int main()
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
-	GLuint programID = Shader::LoadShaders("vertex.vs", "fragment.fs");
-	
-	auto uniforms = Shader::LoadUniforms(programID);
+	GLuint realtimeVFShader = Shader::LoadShaders("vertex.vs", "fragment.fs");
+	GLuint computeVFShader = Shader::LoadShaders("vertex.vs", "cs.fs");
+	GLuint computeCS = Shader::LoadComputeShader("cs.comp");
+	GLuint computeResetCS = Shader::LoadComputeShader("reset.comp");
+
+	auto realtimeUniforms = Shader::LoadUniforms(realtimeVFShader);
+	auto computeVFUniforms = Shader::LoadComputeShaderFragmentUniforms(computeVFShader);
+	auto computeUniforms = Shader::LoadComputeShaderUniforms(computeCS);
+
 	auto prim1 = Primitive::getJuliaPrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	//auto prim1 = Primitive::getCubePrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	//auto prim2 = Primitive::getSpherePrimitive(1.0, vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
@@ -343,7 +362,59 @@ int main()
 	data.shading_mode = &shading_mode;
 	int lastTimelineFrame = data.timeline.frame;
 
+	int TEXTURE_WIDTH = screen_width, TEXTURE_HEIGHT = screen_height;
+	int TILE_WIDTH = screen_width, TILE_HEIGHT = screen_height;
+	int SAMPLES = 32;
+	int SAMPLES_PER_ITER = 1;
+	int render_sample = 0;
+	int render_tile_x = 0;
+	int render_tile_y = 0;
+	unsigned int color_out;
+
+	glGenTextures(1, &color_out);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, color_out);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	glBindImageTexture(0, color_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+	unsigned int samples_out;
+
+	glGenTextures(1, &samples_out);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, samples_out);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
+
+	glBindImageTexture(1, samples_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16UI);
+
+	unsigned int ssbo_prims;
+	glGenBuffers(1, &ssbo_prims);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_prims);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Shader::SSBOPrimitive) * COUNT_PRIMITIVE, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssbo_prims);
+
+	unsigned int ssbo_gm;
+	glGenBuffers(1, &ssbo_gm);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_gm);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Shader::SSBOGroupModifier) * COUNT_GROUP_MODIFIER, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_gm);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	float t = 0.0f;
 	do{
+		float currentFrame = static_cast<float>(glfwGetTime());
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+		t += deltaTime;
+
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		ImGui_ImplOpenGL3_NewFrame();
@@ -354,9 +425,6 @@ int main()
 			RMImGui::RenderImGui(data);
 		}
 		else if (data.engine_state == RMImGui::GameEngineState::Engine) {
-			float currentFrame = static_cast<float>(glfwGetTime());
-			deltaTime = currentFrame - lastFrame;
-			lastFrame = currentFrame;
 			data.timeline.update(deltaTime);
 
 			for (auto& c : data.globals) {
@@ -390,27 +458,167 @@ int main()
 			int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 			glfwGetCursorPos(window, &xpos, &ypos);
 
+			if (lastTimelineFrame != data.timeline.frame || data.recalculate) {
+				data.animate(data.timeline.frame);
+				data.recalculate = false;
+				moved = true;
+			}
+			if (data.reposition_cam && enteredCam) {
+				bool move = update_render_camera();
+				moved |= move;
+			}
+			else if (enteredCam) {
+				bool move = update_camera();
+				moved |= move;
+			}
+
 			auto view = camera.GetViewMatrix();
 			bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
-			glUniformMatrix4fv(uniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
-			glUniform3f(uniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
-			glUniform2f(uniforms.u_resolution, float(screen_width), float(screen_height));
-			glUniform1i(uniforms.shading_mode, shading_mode);
-			glUniform1i(uniforms.render_cam, render_cam);
-			int prim_count = 0;
-			for (auto p : data.primitives) {
-				if (p.prim_type != 0) {
-					prim_count += 1;
+			if (*data.shading_mode == ShadingMode::Render) {
+				if (moved)
+				{
+					moved = false;
+					glUseProgram(computeResetCS);
+					glDispatchCompute(
+						(unsigned int)TEXTURE_WIDTH,
+						(unsigned int)TEXTURE_HEIGHT,
+						1
+					);
+
+					// make sure writing to image has finished before read
+					glMemoryBarrier(GL_ALL_BARRIER_BITS);
+					render_sample = 0;
+					render_tile_x = render_tile_y = 0;
+
+
+					glUseProgram(computeCS);
+					Shader::SSBOPrimitive prims[COUNT_PRIMITIVE];
+					int i;
+					for (i = 0; i < IM_ARRAYSIZE(data.primitives); i++) {
+						prims[i].attribute0 = data.primitives[i].values[0].value;
+						prims[i].attribute1 = data.primitives[i].values[1].value;
+						prims[i].attribute2 = data.primitives[i].values[2].value;
+						prims[i].attribute3 = data.primitives[i].values[3].value;
+						prims[i].attribute4 = data.primitives[i].values[4].value;
+						prims[i].attribute5 = data.primitives[i].values[5].value;
+
+						prims[i].m00 = data.primitives[i].transformation.matrix[0][0];
+						prims[i].m01 = data.primitives[i].transformation.matrix[0][1];
+						prims[i].m02 = data.primitives[i].transformation.matrix[0][2];
+						prims[i].m10 = data.primitives[i].transformation.matrix[1][0];
+						prims[i].m11 = data.primitives[i].transformation.matrix[1][1];
+						prims[i].m12 = data.primitives[i].transformation.matrix[1][2];
+						prims[i].m20 = data.primitives[i].transformation.matrix[2][0];
+						prims[i].m21 = data.primitives[i].transformation.matrix[2][1];
+						prims[i].m22 = data.primitives[i].transformation.matrix[2][2];
+
+						prims[i].position[0] = data.primitives[i].transformation.position[0].value;
+						prims[i].position[1] = data.primitives[i].transformation.position[1].value;
+						prims[i].position[2] = data.primitives[i].transformation.position[2].value;
+						prims[i].prim_type = data.primitives[i].prim_type;
+						for (int j = 0; j < IM_ARRAYSIZE(prims[i].modifiers); j++)
+						{
+							prims[i].modifiers[j].modifier = data.primitives[i].modifiers[j].modifier;
+							prims[i].modifiers[j].modifierAttribute0 = data.primitives[i].modifiers[j].attribute0.value;
+							prims[i].modifiers[j].modifierAttribute1 = data.primitives[i].modifiers[j].attribute1.value;
+							prims[i].modifiers[j].modifierAttribute2 = data.primitives[i].modifiers[j].attribute2.value;
+							prims[i].modifiers[j].modifierAttribute3 = data.primitives[i].modifiers[j].attribute3.value;
+							prims[i].modifiers[j].modifierAttribute4 = data.primitives[i].modifiers[j].attribute4.value;
+						}
+					}
+					for (i; i < COUNT_PRIMITIVE; i++) {
+						prims[i].prim_type = 0;
+					}
+					glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_prims);
+					glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(prims), &prims[0]);
+
+					Shader::SSBOGroupModifier groups[COUNT_GROUP_MODIFIER];
+					for (i = 0; i < IM_ARRAYSIZE(data.groupPrimitives); i++) {
+						groups[i].modifier = data.groupPrimitives[i].modifier;
+						groups[i].prim0 = data.groupPrimitives[i].prim0;
+						groups[i].prim1 = data.groupPrimitives[i].prim1;
+						groups[i].prim2 = data.groupPrimitives[i].prim2;
+						groups[i].prim3 = data.groupPrimitives[i].prim3;
+						groups[i].primAttribute = data.groupPrimitives[i].primAttribute.value;
+					}
+					for (i; i < COUNT_GROUP_MODIFIER; i++) {
+						groups[i].modifier = 0;
+					}
+					glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_gm);
+					glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(groups), &groups[0]);
+				}else
+					glUseProgram(computeCS);
+
+				glUniformMatrix4fv(computeUniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
+				glUniform3f(computeUniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniform2f(computeUniforms.u_resolution, float(screen_width), float(screen_height));
+				glUniform1i(computeUniforms.shading_mode, shading_mode);
+				glUniform1i(computeUniforms.render_cam, render_cam);
+				int prim_count = 0;
+				for (auto p : data.primitives) {
+					if (p.prim_type != 0) {
+						prim_count += 1;
+					}
 				}
+
+				glUniform3f(computeUniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
+				glUniform1i(computeUniforms.u_prim_count, prim_count);
+				glFinish();
+				auto start = std::chrono::high_resolution_clock::now();
+				
+				if (render_sample < SAMPLES) {
+					if (render_sample < SAMPLES) {
+						Shader::PrepareComputeShader(computeUniforms, data.primitives, data.primCount(), data.groupPrimitives, data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample);
+						glDispatchCompute(
+							ceil((unsigned int)std::min(TILE_WIDTH, TEXTURE_WIDTH - render_tile_x * TILE_WIDTH) / 8),
+							ceil((unsigned int)std::min(TILE_HEIGHT, TEXTURE_HEIGHT - render_tile_y * TILE_HEIGHT) / 4),
+							1
+						);
+							
+						// make sure writing to image has finished before read
+						glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+						render_tile_x++;
+					}
+					if (TILE_WIDTH >= TEXTURE_WIDTH || render_tile_x * TILE_WIDTH > TEXTURE_WIDTH) {
+						render_tile_x = 0;
+						render_tile_y++;
+					}
+					if (TILE_HEIGHT >= TEXTURE_HEIGHT || render_tile_y * TILE_HEIGHT > TEXTURE_HEIGHT) {
+						render_tile_y = 0;
+						render_sample += SAMPLES_PER_ITER;
+					}
+				}
+
+				glFinish();
+				auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+				if(ms != 0)
+					std::cout << ms << "ms\n";
+				glUseProgram(computeVFShader);
+				Shader::PrepareComputeShaderFragment(computeVFUniforms, render_sample, SAMPLES);
+				glUniform2f(computeVFUniforms.u_resolution, float(screen_width), float(screen_height));
+
+			}else{
+				glUseProgram(realtimeVFShader);
+
+				glUniformMatrix4fv(realtimeUniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
+				glUniform3f(realtimeUniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniform2f(realtimeUniforms.u_resolution, float(screen_width), float(screen_height));
+				glUniform1i(realtimeUniforms.shading_mode, shading_mode);
+				glUniform1i(realtimeUniforms.render_cam, render_cam);
+				int prim_count = 0;
+				for (auto p : data.primitives) {
+					if (p.prim_type != 0) {
+						prim_count += 1;
+					}
+				}
+
+				glUniform3f(realtimeUniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
+				glUniform1i(realtimeUniforms.u_prim_count, prim_count);
+
+				Shader::PrepareShader(data.primitives, data.primCount(), data.groupPrimitives, realtimeUniforms);
 			}
-
-			glUniform3f(uniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
-			glUniform1i(uniforms.u_prim_count, prim_count);
-			PrepareShader(data.primitives, data.groupPrimitives, uniforms);
-
-			// Use our shader
-			glUseProgram(programID);
 
 			glEnableVertexAttribArray(0);
 			glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -433,29 +641,19 @@ int main()
 				0,                  // stride
 				(void*)0            // array buffer offset
 			);
-
+			glFinish();
+			auto start = std::chrono::high_resolution_clock::now();
 			// Draw the triangle !
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4); // 3 indices starting at 0 -> 1 triangle
-
+			glFinish(); 
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+			if (ms != 0)
+				std::cout << ms << "ms\n";
 			glDisableVertexAttribArray(0);
 			glDisableVertexAttribArray(1);
 
 			RMImGui::RenderImGui(data);
 
-			// Swap buffers
-
-			if (lastTimelineFrame != data.timeline.frame || data.recalculate) {
-
-				data.animate(data.timeline.frame);
-				data.recalculate = false;
-			}
-
-			if (data.reposition_cam && enteredCam) {
-				update_render_camera();
-			}
-			else if (enteredCam) {
-				update_camera();
-			}
 			lastTimelineFrame = data.timeline.frame;
 		}
 		glfwSwapBuffers(window);
@@ -481,10 +679,19 @@ int main()
 	// Cleanup VBO
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteProgram(programID);
+	glDeleteProgram(realtimeVFShader);
+	glDeleteProgram(computeCS);
+	glDeleteProgram(computeVFShader);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
+
+	try {
+		lua.~LuaContext();
+	}
+	catch (std::exception e) {
+
+	}
 
 	return 0;
 }
