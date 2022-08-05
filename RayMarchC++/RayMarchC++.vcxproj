@@ -196,10 +196,20 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cs.comp" />
+    <None Include="cs.comp.compiled" />
     <None Include="cs.fs" />
     <None Include="fragment.fs" />
     <None Include="helpers.h" />
+    <None Include="helpers.shader" />
+    <None Include="helpers.shader.compiled" />
+    <None Include="mods.shader" />
+    <None Include="mods.shader.compiled" />
     <None Include="reset.comp" />
+    <None Include="reset.comp.compiled" />
+    <None Include="sdf.shader" />
+    <None Include="sdf.shader.compiled" />
+    <None Include="structs.shader" />
+    <None Include="structs.shader.compiled" />
     <None Include="vertex.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -44,6 +44,14 @@ namespace Shader {
 		GLint modifier;
 	};
 
+	struct SSBOLight {
+		GLfloat attribute0;
+		GLfloat attribute1;
+		GLfloat attribute2;
+		GLfloat colorR, colorG, colorB;
+		GLint type;
+	};
+
 	struct ShaderUniforms {
 		GLuint camera_pos;
 		GLuint camera_rot;
@@ -53,6 +61,7 @@ namespace Shader {
 		GLuint u_prim_count, u_group_count;
 		GLuint camera_pos_render;
 		GLuint camera_dir_render;
+		GLuint focal_length;
 	};
 
 	struct ComputeShaderFragmentUniforms {
@@ -62,14 +71,12 @@ namespace Shader {
 	};
 
 	struct ComputeShaderUniforms {
-		GLuint offsetX, offsetY, t, samples, total_samples, current_sample;
+		GLuint offsetX, offsetY, t, number_samples, total_samples, current_sample;
 		GLuint camera_pos_render; 
 		GLuint camera_dir_render; 
 		GLuint camera_pos;
 		GLuint camera_rot;
 		GLuint u_resolution;
-		GLuint shading_mode;
-		GLuint render_cam;
 		GLuint u_prim_count, u_group_count;
 		GLuint apeture_size, focus_dist, focal_length;
 	};
@@ -83,7 +90,7 @@ namespace Shader {
 	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program);
 	ComputeShaderFragmentUniforms LoadComputeShaderFragmentUniforms(const GLuint program);
 
-	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms);
+	void PrepareShader(int prim_count, int mod_count, float focal_length, ShaderUniforms uniforms);
 	void PrepareComputeShaderFragment(ComputeShaderFragmentUniforms uniforms, int samples, int total_samples);
 	void PrepareComputeShader(const ComputeShaderUniforms uniforms, int prim_count, int mod_count, float offsetX, float offsetY, float t, int total_samples, int samples, int current_sample, RMImGui::CameraData cam_data);
 }

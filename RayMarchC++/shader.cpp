@@ -20,16 +20,14 @@ namespace Shader {
 		u.offsetY = LoadUniform(program, "yOffset");
 		u.t = LoadUniform(program, "t");
 		u.total_samples = LoadUniform(program, "total_samples");
-		u.samples = LoadUniform(program, "samples");
+		u.number_samples = LoadUniform(program, "number_samples");
 		u.current_sample = LoadUniform(program, "current_sample");
 		u.camera_pos = LoadUniform(program, "camera_pos");
 		u.camera_rot = LoadUniform(program, "camera_rot");
-		u.shading_mode = LoadUniform(program, "shading_mode");
 		u.u_resolution = LoadUniform(program, "u_resolution");
 		u.u_prim_count = LoadUniform(program, "u_prim_count");
 		u.u_group_count = LoadUniform(program, "u_group_count");
 		u.camera_pos_render = LoadUniform(program, "camera_pos_render");
-		u.render_cam = LoadUniform(program, "render_cam");
 		u.camera_dir_render = LoadUniform(program, "camera_dir_render");
 		return u;
 	}
@@ -45,6 +43,7 @@ namespace Shader {
 
 	ShaderUniforms LoadUniforms(const GLuint program) {
 		ShaderUniforms u;
+		u.focal_length = LoadUniform(program, "focal_length");
 		u.camera_pos = LoadUniform(program, "camera_pos");
 		u.camera_rot = LoadUniform(program, "camera_rot");
 		u.shading_mode = LoadUniform(program, "shading_mode");
@@ -65,7 +64,7 @@ namespace Shader {
 		glUniform1f(uniforms.offsetX, offsetX);
 		glUniform1f(uniforms.offsetY, offsetY);
 		glUniform1f(uniforms.t, t);
-		glUniform1i(uniforms.samples, samples);
+		glUniform1i(uniforms.number_samples, samples);
 		glUniform1i(uniforms.total_samples, total_samples);
 		glUniform1i(uniforms.current_sample, current_sample);
 		glUniform1i(uniforms.u_prim_count, prim_count);
@@ -77,12 +76,41 @@ namespace Shader {
 		glUniform1i(uniforms.total_samples, total_samples);
 	}
 
-	void PrepareShader(int prim_count, int mod_count, ShaderUniforms uniforms)
+	void PrepareShader(int prim_count, int mod_count, float focal_length, ShaderUniforms uniforms)
 	{
+		glUniform1f(uniforms.focal_length, focal_length);
 		glUniform1i(uniforms.u_prim_count, prim_count);
 		glUniform1i(uniforms.u_group_count, mod_count);
 	}
 
+	std::string MergeShader(const char* shader_file) {
+		std::string shaderCode, line;
+		std::ifstream shaderStream(shader_file, std::ios::in);
+		if (shaderStream.is_open()) {
+
+			while (std::getline(shaderStream, line))
+			{
+				if (line.length() > 1 && line[0] == '$') {
+					line.erase(0, 1);
+					shaderCode += MergeShader(line.c_str());
+				}
+				else {
+					shaderCode += line + "\n";
+				}
+			}
+			shaderStream.close();
+
+			std::ofstream shaderCompiled(std::string(shader_file) + ".compiled", std::ios_base::out);
+			shaderCompiled << shaderCode;
+			shaderCompiled.close();
+			return shaderCode;
+		}
+		else {
+			printf("Cannot open %s!\n", shader_file);
+			getchar();
+			return "";
+		}
+	}
 
 	GLuint LoadComputeShader(const char* compute_shader_file_path) {
 
@@ -90,23 +118,9 @@ namespace Shader {
 		GLuint ID = glCreateShader(GL_COMPUTE_SHADER);
 
 		// Read the Vertex Shader code from the file
-		std::string ComputeShaderCode;
-		std::ifstream ComputeShaderStream(compute_shader_file_path, std::ios::in);
-		if (ComputeShaderStream.is_open()) {
-			std::stringstream sstr;
-			sstr << ComputeShaderStream.rdbuf();
-			ComputeShaderCode = sstr.str();
-			ComputeShaderStream.close();
-		}
-		else {
-			printf("Cannot open %s!\n", compute_shader_file_path);
-			getchar();
-			return 0;
-		}
-
+		std::string ComputeShaderCode = MergeShader(compute_shader_file_path);
 		GLint Result = GL_FALSE;
 		int InfoLogLength;
-
 
 		// Compile Vertex Shader
 		printf("Compiling compute shader : %s\n", compute_shader_file_path);

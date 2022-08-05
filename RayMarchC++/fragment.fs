@@ -9,6 +9,7 @@ float s, c;
 
 out vec4 fragColor;
 in vec2 f_texCoords;
+uniform float focal_length;
 
 struct Modifier {
     float modifierAttribute0;
@@ -443,7 +444,7 @@ void main()
 {
     vec2 uv = ((f_texCoords.xy - 0.5) * u_resolution.xy) / u_resolution.y;
 
-    vec3 rayDir = (vec4(normalize(vec3(uv.x, uv.y, -1.)), 0.0) * camera_rot).xyz;
+    vec3 rayDir = (vec4(normalize(vec3(uv.x, uv.y, -focal_length)), 0.0) * camera_rot).xyz;
     vec2 res = u_resolution.xy;
 
     //vec3 rayDir = normalize(vec3(f_texCoords.x, f_texCoords.y, 1.));

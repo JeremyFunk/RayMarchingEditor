@@ -1,5 +1,6 @@
 #pragma once
 
+const int COUNT_LIGHTS = 10;
 const int COUNT_GROUP_MODIFIER = 10;
 const int COUNT_PRIMITIVE_MODIFIER = 3;
 const int COUNT_PRIMITIVE = 50;

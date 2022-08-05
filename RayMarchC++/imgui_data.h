@@ -195,10 +195,90 @@ namespace RMImGui {
         }
     };
 
+    struct Light {
+        int type;
+        float attribute0;
+        float attribute1;
+        float attribute2;
+        glm::vec3 color;
+
+        static Light PointLight(glm::vec3 position, glm::vec3 color) {
+            Light l;
+            l.attribute0 = position.x;
+            l.attribute1 = position.y;
+            l.attribute2 = position.z;
+            l.color = color;
+            l.type = 1;
+            return l;
+        }
+        static Light DirectionalLight(glm::vec3 direction, glm::vec3 color) {
+            Light l;
+            l.attribute0 = direction.x;
+            l.attribute1 = direction.y;
+            l.attribute2 = direction.z;
+            l.color = color;
+            l.type = 2;
+            return l;
+        }
+
+        static Light Reset(Light l) {
+            l.type = 0;
+            return l;
+        }
+    };
+
+    template <class T, int S, T(*Reset)(T)> class ManagedArray {
+    public:
+        T values[S];
+        int count = 0;
+
+        ManagedArray() {
+
+        }
+
+        T operator [](int x) const {
+            return values[x];
+        }
+
+        T& operator [](int x) {
+            return values[x];
+        }
+
+        bool AddElement(T t) {
+            if (count < S) {
+                values[count] = t;
+                count++;
+                return true;
+            }
+            return false;
+        }
+
+        void RemoveElement(int s) {
+            if (s >= count || s >= S) {
+                return;
+            }
+
+            if (s == count - 1) {
+                values[s] = Reset(values[s]);
+                count--;
+                return;
+            }
+
+            for (int i = s; i < count - 1; i++) {
+                values[i] = values[i + 1];
+            }
+
+            values[count - 1] = Reset(values[count - 1]);
+            count--;
+        }
+    };
+
+
     struct ImGuiData {
         int* shading_mode;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
         Primitive::ShaderGroupPrimitive groupPrimitives[COUNT_GROUP_MODIFIER];
+        ManagedArray<Light, COUNT_LIGHTS, Light::Reset> lights = ManagedArray<Light, COUNT_LIGHTS, Light::Reset>();
         glm::vec3 cam_rot;
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py;

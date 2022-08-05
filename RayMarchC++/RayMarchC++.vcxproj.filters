@@ -19,6 +19,18 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{91715c01-57bf-472a-aa28-d8bc80824d89}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{5a2a816c-8e83-4cdf-86e1-387dece85928}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\shaders">
+      <UniqueIdentifier>{47d7759f-9985-45f3-b4b0-20cf23a3079d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\shaders\parts">
+      <UniqueIdentifier>{8ac9744c-50a4-4961-8577-003c1947da19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders\compiled">
+      <UniqueIdentifier>{a90798c4-da1f-4a31-8896-0df16c80e5b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
@@ -169,23 +181,53 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertex.vs">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="fragment.fs">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include="helpers.h">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="cs.fs">
-      <Filter>Source Files</Filter>
+    <None Include="sdf.shader">
+      <Filter>Source Files\shaders\shaders\parts</Filter>
+    </None>
+    <None Include="structs.shader">
+      <Filter>Source Files\shaders\shaders\parts</Filter>
+    </None>
+    <None Include="helpers.shader">
+      <Filter>Source Files\shaders\shaders\parts</Filter>
+    </None>
+    <None Include="mods.shader">
+      <Filter>Source Files\shaders\shaders\parts</Filter>
     </None>
     <None Include="cs.comp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders\shaders</Filter>
+    </None>
+    <None Include="cs.fs">
+      <Filter>Source Files\shaders\shaders</Filter>
+    </None>
+    <None Include="fragment.fs">
+      <Filter>Source Files\shaders\shaders</Filter>
     </None>
     <None Include="reset.comp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\shaders\shaders</Filter>
+    </None>
+    <None Include="vertex.vs">
+      <Filter>Source Files\shaders\shaders</Filter>
+    </None>
+    <None Include="structs.shader.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="cs.comp.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="helpers.shader.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="mods.shader.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="reset.comp.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="sdf.shader.compiled">
+      <Filter>Source Files\shaders\compiled</Filter>
     </None>
   </ItemGroup>
 </Project>

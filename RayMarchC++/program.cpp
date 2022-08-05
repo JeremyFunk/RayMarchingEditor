@@ -56,6 +56,8 @@ bool moved = false;
 
 int cam_mode = 0;
 
+unsigned int samples_out, color_out, depth_out;
+
 Camera camera(glm::vec3(0.0, 0.0, 3.0));
 static RMImGui::ImGuiData data;
 
@@ -70,6 +72,17 @@ void window_size_callback(GLFWwindow* window, int width, int height)
 	screen_width = width;
 	screen_height = height;
 	glViewport(0, 0, screen_width, screen_height);
+
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, color_out);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+
+	//glBindImageTexture(0, color_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, samples_out);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
 }
 
 void move() {
@@ -362,14 +375,13 @@ int main()
 	data.shading_mode = &shading_mode;
 	int lastTimelineFrame = data.timeline.frame;
 
-	int TEXTURE_WIDTH = screen_width, TEXTURE_HEIGHT = screen_height;
+	bool tiling = false;
 	int TILE_WIDTH = screen_width, TILE_HEIGHT = screen_height;
 	int SAMPLES = 256;
 	int SAMPLES_PER_ITER = 1;
 	int render_sample = 0;
 	int render_tile_x = 0;
 	int render_tile_y = 0;
-	unsigned int color_out;
 
 	glGenTextures(1, &color_out);
 	glActiveTexture(GL_TEXTURE0);
@@ -378,11 +390,9 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
 
 	glBindImageTexture(0, color_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-
-	unsigned int samples_out;
 
 	glGenTextures(1, &samples_out);
 	glActiveTexture(GL_TEXTURE1);
@@ -391,7 +401,7 @@ int main()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, screen_width, screen_height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
 
 	glBindImageTexture(1, samples_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16UI);
 
@@ -408,6 +418,15 @@ int main()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_gm);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	unsigned int ssbo_lights;
+	glGenBuffers(1, &ssbo_lights);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_lights);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Shader::SSBOLight) * COUNT_LIGHTS, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_lights);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+	data.lights.AddElement(RMImGui::Light::PointLight(glm::vec3(4, 4, 3), glm::vec3(3.0, 1.0, 2.0)));
+	
 	float t = 0.0f;
 	do{
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -476,6 +495,19 @@ int main()
 			bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
 			if (moved) {
+				Shader::SSBOLight lights[COUNT_LIGHTS];
+				for (int i = 0; i < IM_ARRAYSIZE(data.lights.values); i++) {
+					lights[i].attribute0 = data.lights[i].attribute0;
+					lights[i].attribute1 = data.lights[i].attribute1;
+					lights[i].attribute2 = data.lights[i].attribute2;
+					lights[i].colorR = data.lights[i].color.x;
+					lights[i].colorG = data.lights[i].color.y;
+					lights[i].colorB = data.lights[i].color.z;
+					lights[i].type = data.lights[i].type;
+				}
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_lights);
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(lights), &lights[0]);
+
 				Shader::SSBOPrimitive prims[COUNT_PRIMITIVE];
 				int i;
 				for (i = 0; i < IM_ARRAYSIZE(data.primitives); i++) {
@@ -538,8 +570,8 @@ int main()
 					moved = false;
 					glUseProgram(computeResetCS);
 					glDispatchCompute(
-						(unsigned int)TEXTURE_WIDTH,
-						(unsigned int)TEXTURE_HEIGHT,
+						(unsigned int)screen_width,
+						(unsigned int)screen_height,
 						1
 					);
 
@@ -554,8 +586,6 @@ int main()
 				glUniformMatrix4fv(computeUniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
 				glUniform3f(computeUniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
 				glUniform2f(computeUniforms.u_resolution, float(screen_width), float(screen_height));
-				glUniform1i(computeUniforms.shading_mode, shading_mode);
-				glUniform1i(computeUniforms.render_cam, render_cam);
 				int prim_count = 0;
 				for (auto p : data.primitives) {
 					if (p.prim_type != 0) {
@@ -569,26 +599,37 @@ int main()
 				auto start = std::chrono::high_resolution_clock::now();
 				
 				if (render_sample < SAMPLES) {
-					if (render_sample < SAMPLES) {
-						Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample, data.cam_data);
+					Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample, data.cam_data);
+					if (tiling) {
 						glDispatchCompute(
-							ceil((unsigned int)std::min(TILE_WIDTH, TEXTURE_WIDTH - render_tile_x * TILE_WIDTH) / 8),
-							ceil((unsigned int)std::min(TILE_HEIGHT, TEXTURE_HEIGHT - render_tile_y * TILE_HEIGHT) / 4),
+							ceil((unsigned int)std::min(TILE_WIDTH, screen_width - render_tile_x * TILE_WIDTH) / 8),
+							ceil((unsigned int)std::min(TILE_HEIGHT, screen_height - render_tile_y * TILE_HEIGHT) / 4),
 							1
 						);
+					}
+					else {
+						glDispatchCompute(
+							ceil((unsigned int)screen_width / 8),
+							ceil((unsigned int)screen_height / 4),
+							1
+						);
+					}
 							
-						// make sure writing to image has finished before read
-						glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
+					// make sure writing to image has finished before read
+					glMemoryBarrier(GL_ALL_BARRIER_BITS);
+					if (tiling) {
 						render_tile_x++;
+						if (TILE_WIDTH >= screen_width || render_tile_x * TILE_WIDTH > screen_width) {
+							render_tile_x = 0;
+							render_tile_y++;
+						}
+						if (TILE_HEIGHT >= screen_height || render_tile_y * TILE_HEIGHT > screen_height) {
+							render_tile_y = 0;
+							render_sample += SAMPLES_PER_ITER;
+						}
 					}
-					if (TILE_WIDTH >= TEXTURE_WIDTH || render_tile_x * TILE_WIDTH > TEXTURE_WIDTH) {
-						render_tile_x = 0;
-						render_tile_y++;
-					}
-					if (TILE_HEIGHT >= TEXTURE_HEIGHT || render_tile_y * TILE_HEIGHT > TEXTURE_HEIGHT) {
-						render_tile_y = 0;
-						render_sample += SAMPLES_PER_ITER;
+					else {
+						render_sample++;
 					}
 				}
 
@@ -618,7 +659,7 @@ int main()
 				glUniform3f(realtimeUniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
 				glUniform1i(realtimeUniforms.u_prim_count, prim_count);
 
-				Shader::PrepareShader(data.primCount(), data.groupModifierCount(), realtimeUniforms);
+				Shader::PrepareShader(data.primCount(), data.groupModifierCount(), data.cam_data.focal_length.value, realtimeUniforms);
 			}
 
 			glEnableVertexAttribArray(0);
