@@ -37,10 +37,19 @@ namespace Scene {
         AnimatedFloat f;
     };
 
+    struct SceneLight {
+        std::string name;
+        AnimatedFloatVec3 color;
+        AnimatedFloat attribute0, attribute1, attribute2;
+        AnimatedFloat intensity;
+        int type;
+    };
+
     struct Scene {
         std::vector<SceneObject> objects = std::vector<SceneObject>();
         std::vector<SceneGroupModifier> group_modifiers = std::vector<SceneGroupModifier>();
         std::vector<SceneScript> scripts = std::vector<SceneScript>();
+        std::vector<SceneLight> lights = std::vector<SceneLight>();
         std::string directory;
         RMImGui::CameraData cam_data;
         AnimatedFloatVec3 cam_pos;

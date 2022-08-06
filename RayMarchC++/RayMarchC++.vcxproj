@@ -181,6 +181,7 @@
     <ClInclude Include="constants.h" />
     <ClInclude Include="custom_imgui.h" />
     <ClInclude Include="data.h" />
+    <ClInclude Include="fglsl.h" />
     <ClInclude Include="free_cam.h" />
     <ClInclude Include="helpers_glm.h" />
     <ClInclude Include="imgui_animation.h" />

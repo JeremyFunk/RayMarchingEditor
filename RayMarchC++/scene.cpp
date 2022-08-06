@@ -19,6 +19,21 @@ namespace Scene {
         scene.directory = data.project_path;
         scene.cam_data = data.cam_data;
 
+        for (int i = 0; i < data.lights.count; i++) {
+            if (data.lights[i].type != 0) {
+                SceneLight l;
+                l.attribute0 = data.lights[i].attribute0;
+                l.attribute1 = data.lights[i].attribute1;
+                l.attribute2 = data.lights[i].attribute2;
+                l.color = data.lights[i].color;
+                l.intensity = data.lights[i].intensity;
+                l.name = data.lights[i].name;
+                l.type = data.lights[i].type;
+
+                scene.lights.push_back(l);
+            }
+        }
+
         for (int i = 0; i < COUNT_PRIMITIVE; i++) {
             if (data.primitives[i].prim_type != 0) {
                 SceneObject object;
@@ -151,6 +166,21 @@ namespace Scene {
         std::vector<json> objects = std::vector<json>();
         std::vector<json> group_modifiers = std::vector<json>();
         std::vector<json> globals = std::vector<json>();
+        std::vector<json> lights = std::vector<json>();
+
+        for (int i = 0; i < scene.lights.size(); i++) {
+            json l;
+            animatedFloatToJson(scene.lights[i].attribute0, scene, l["attribute0"]);
+            animatedFloatToJson(scene.lights[i].attribute1, scene, l["attribute1"]);
+            animatedFloatToJson(scene.lights[i].attribute2, scene, l["attribute2"]);
+
+            animatedVectorToJson(scene.lights[i].color, scene, l["color"]);
+            animatedFloatToJson(scene.lights[i].intensity, scene, l["intensity"]);
+            l["name"] = scene.lights[i].name;
+            l["type"] = scene.lights[i].type;
+
+            lights.push_back(l);
+        }
         
         for (int i = 0; i < scene.objects.size(); i++) {
             json o;
@@ -205,6 +235,7 @@ namespace Scene {
         j["objects"] = objects;
         j["group_modifiers"] = group_modifiers;
         j["globals"] = globals;
+        j["lights"] = lights;
         animatedVectorToJson(scene.cam_pos, scene, j["camera"]["cam_pos"]);
         animatedVector2ToJson(scene.cam_py, scene, j["camera"]["cam_py"]);
 
@@ -233,6 +264,19 @@ namespace Scene {
                 ss.script[i] = content[i];
             }
             s.scripts.push_back(ss);
+        }
+
+        for (int i = 0; i < j["lights"].size(); i++) {
+            SceneLight l;
+            l.attribute0 = jsonToAnimatedFloat(j["lights"][i]["attribute0"], s);
+            l.attribute1 = jsonToAnimatedFloat(j["lights"][i]["attribute1"], s);
+            l.attribute2 = jsonToAnimatedFloat(j["lights"][i]["attribute2"], s);
+            l.intensity = jsonToAnimatedFloat(j["lights"][i]["intensity"], s);
+            l.color = jsonToAnimatedVector3(j["lights"][i]["color"], s);
+            l.name = j["lights"][i]["name"];
+            l.type = j["lights"][i]["type"];
+
+            s.lights.push_back(l);
         }
 
         s.cam_pos = jsonToAnimatedVector3(j["camera"]["cam_pos"], s);
@@ -320,6 +364,18 @@ namespace Scene {
             g.f = scene.globals[i].f;
 
             d.globals.push_back(g);
+        }
+
+        for (int i = 0; i < scene.lights.size(); i++) {
+            RMImGui::Light l;
+            l.name = scene.lights[i].name;
+            l.attribute0 = scene.lights[i].attribute0;
+            l.attribute1 = scene.lights[i].attribute1;
+            l.attribute2 = scene.lights[i].attribute2;
+            l.color = scene.lights[i].color;
+            l.intensity = scene.lights[i].intensity;
+            l.type = scene.lights[i].type;
+            d.lights.AddElement(l);
         }
 
         for (int i = 0; i < scene.scripts.size(); i++) {

@@ -43,6 +43,7 @@ using namespace glm;
 #include "free_cam.h"
 #include "imgui_handler.h"
 #include "scene.h"
+#include "fglsl.h"
 int screen_width = 1920;
 int screen_height = 1080;
 float lastX = screen_width / 2.0f;
@@ -288,6 +289,39 @@ void recompile(LuaContext &lua, RMImGui::ScriptData &c) {
 
 int main()
 {
+	auto fglsl = FGLSL::Preprare("cs.comp");
+	/*for (auto c : fglsl.conditional) {
+		std::cout << c.name << std::endl;
+	}
+	for (auto c : fglsl.tokens) {
+		std::cout << c.name << std::endl;
+	}*/
+	fglsl.SetValue("MAX_PRIM_COUNT", "20");
+	fglsl.SetValue("MAX_PRIM_COUNT", "30");
+	fglsl.SetValue("MAX_MOD_COUNT", "30");
+	fglsl.SetValue("MAX_MOD_COUNT", "40");
+	fglsl.SetCondition("LIGHTS", false);
+	fglsl.SetCondition("LIGHTS", true);
+
+	auto shaders = FGLSL::GenerateShaders(fglsl);
+
+	for (auto c : shaders.shaders) {
+		for (auto s : c.settings) {
+			std::cout << s.name << s.value << std::endl;
+		}
+		for (auto s : c.conditions) {
+			std::cout << s.name << s.active << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	shaders.SetValue("MAX_MOD_COUNT", "40");
+	shaders.SetValue("MAX_PRIM_COUNT", "30");
+	shaders.SetConditional("LIGHTS", true);
+	auto shader = shaders.GetShader();
+	std::cout << shader.code;
+
+	return 0;
 	LuaContext lua;
 
 	if (!RMIO::SetupDirectories()) {
@@ -425,7 +459,7 @@ int main()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_lights);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
-	data.lights.AddElement(RMImGui::Light::PointLight(glm::vec3(4, 4, 3), glm::vec3(3.0, 1.0, 2.0)));
+	data.lights.AddElement(RMImGui::Light::PointLight(glm::vec3(4, 4, 3), glm::vec3(0.2, 0.3, 0.4), 300.0));
 	
 	float t = 0.0f;
 	do{
@@ -494,15 +528,23 @@ int main()
 			auto view = camera.GetViewMatrix();
 			bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
 
-			if (moved) {
+			if (moved || data.rerender) {
 				Shader::SSBOLight lights[COUNT_LIGHTS];
 				for (int i = 0; i < IM_ARRAYSIZE(data.lights.values); i++) {
-					lights[i].attribute0 = data.lights[i].attribute0;
-					lights[i].attribute1 = data.lights[i].attribute1;
-					lights[i].attribute2 = data.lights[i].attribute2;
-					lights[i].colorR = data.lights[i].color.x;
-					lights[i].colorG = data.lights[i].color.y;
-					lights[i].colorB = data.lights[i].color.z;
+					if (data.lights[i].type == 2) {
+						auto temp_vec = glm::normalize(glm::vec3(data.lights[i].attribute0.value, data.lights[i].attribute1.value, data.lights[i].attribute2.value));
+						lights[i].attribute0 = temp_vec.x;
+						lights[i].attribute1 = temp_vec.y;
+						lights[i].attribute2 = temp_vec.z;
+					}
+					else {
+						lights[i].attribute0 = data.lights[i].attribute0.value;
+						lights[i].attribute1 = data.lights[i].attribute1.value;
+						lights[i].attribute2 = data.lights[i].attribute2.value;
+					}
+					lights[i].colorR = data.lights[i].color.values[0].value * data.lights[i].intensity.value;
+					lights[i].colorG = data.lights[i].color.values[1].value * data.lights[i].intensity.value;
+					lights[i].colorB = data.lights[i].color.values[2].value * data.lights[i].intensity.value;
 					lights[i].type = data.lights[i].type;
 				}
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_lights);
@@ -565,9 +607,8 @@ int main()
 			}
 
 			if (*data.shading_mode == ShadingMode::Render) {
-				if (moved)
+				if (moved || data.rerender)
 				{
-					moved = false;
 					glUseProgram(computeResetCS);
 					glDispatchCompute(
 						(unsigned int)screen_width,
@@ -683,19 +724,20 @@ int main()
 				0,                  // stride
 				(void*)0            // array buffer offset
 			);
-			glFinish();
-			auto start = std::chrono::high_resolution_clock::now();
+			//glFinish();
+			//auto start = std::chrono::high_resolution_clock::now();
 			// Draw the triangle !
 			glDrawArrays(GL_TRIANGLE_FAN, 0, 4); // 3 indices starting at 0 -> 1 triangle
-			glFinish(); 
-			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
+			//glFinish(); 
+			//auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
 			/*if (ms != 0)
 				std::cout << ms << "ms\n";*/
 			glDisableVertexAttribArray(0);
 			glDisableVertexAttribArray(1);
 
+			data.rerender = false;
 			RMImGui::RenderImGui(data);
-
+			moved = false;
 			lastTimelineFrame = data.timeline.frame;
 		}
 		glfwSwapBuffers(window);

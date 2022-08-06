@@ -179,6 +179,9 @@
     <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\misc\exception.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="fglsl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="helpers.h">

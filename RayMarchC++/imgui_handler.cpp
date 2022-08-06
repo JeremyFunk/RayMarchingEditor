@@ -425,6 +425,30 @@ namespace RMImGui {
 		}
 	}
 
+	void DisplayLight(ImGuiData* data, int i) {
+
+		auto l = &data->lights[i];
+		float p3[] = { l->color[0].value, l->color[1].value, l->color[2].value };
+
+		if (ImGui::ColorPicker3("Color", p3)) {
+			l->color[0].value = p3[0];
+			l->color[1].value = p3[1];
+			l->color[2].value = p3[2];
+			data->rerender = true;
+		}
+		
+		if (l->type == 1) {
+			ImGui::KeyframeDragFloat(data, "Light/Intensity", "Intensity", data->timeline.frame, &l->intensity, 1.f, 0.0f, 100000.f);
+			AnimatedFloat* p3[3] = { &l->attribute0, &l->attribute1, &l->attribute2 };
+			ImGui::KeyframeDragFloat3(data, "Light/Position", "Position", data->timeline.frame, p3, 0.01, -500.0, 500.0, "%.3f", 0);
+		}
+		else if (l->type == 2) {
+			ImGui::KeyframeDragFloat(data, "Light/Intensity", "Intensity", data->timeline.frame, &l->intensity, 0.01f, 0.0f, 100000.f);
+			AnimatedFloat* p3[3] = { &l->attribute0, &l->attribute1, &l->attribute2 };
+			ImGui::KeyframeDragFloat3(data, "Light/Direction", "Direction", data->timeline.frame, p3, 0.01, -500.0, 500.0, "%.3f", 0);
+		}
+	}
+
 	void DisplayObjects(ImGuiData* data) {
 		ImGui::BeginTabBar("##tabs");
 		
@@ -486,10 +510,41 @@ namespace RMImGui {
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("Global Variables")) {
-			DisplayGlobals(data);
+		if (ImGui::BeginTabItem("Lights")) {
+			if (ImGui::CollapsingHeader("General"))
+			{
+				ImGui::Text("Add");
+				if (ImGui::Button("Point Light"))
+				{
+					auto prim = RMImGui::Light::PointLight(glm::vec3(0.0), glm::vec3(1.0), 1000.0);
+					data->lights.AddElement(prim);
+				}
+
+				if (ImGui::Button("Directional Light"))
+				{
+					auto prim = RMImGui::Light::DirectionalLight(glm::vec3(0.0, -1.0, 0.0), glm::vec3(1.0), 0.5);
+					data->lights.AddElement(prim);
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Lights"))
+			{
+				for (int i = 0; i < data->lights.count; i++) {
+					auto l = data->lights[i];
+					if (l.type == 0) {
+						continue;
+					}
+
+					if (ImGui::TreeNode(std::string(std::string(l.name) + "##" + std::to_string(i)).c_str()))
+					{
+						DisplayLight(data, i);
+						ImGui::TreePop();
+					}
+				}
+			}
 			ImGui::EndTabItem();
 		}
+
 		ImGui::EndTabBar();
 	}
 
@@ -533,10 +588,21 @@ namespace RMImGui {
 
 			data.camSelected = true;
 
+			ImGui::KeyframeDragFloat(&data, "Camera->Focal length", "Focal length", data.timeline.frame, &data.cam_data.focal_length, 0.01f, 0.f, 20.f);
+			ImGui::KeyframeDragFloat(&data, "Camera->Focus distance", "Focus distance", data.timeline.frame, &data.cam_data.focus_dist, 0.01f, 0.f, 20.f);
+			ImGui::KeyframeDragFloat(&data, "Camera->Apeture size", "Apeture size", data.timeline.frame, &data.cam_data.apeture_size, 0.01f, 0.f, 20.f);
+
+
 			ImGui::EndTabItem();
 		}
 		else {
 			data.camSelected = false;
+		}
+
+
+		if (ImGui::BeginTabItem("Global Variables")) {
+			DisplayGlobals(&data);
+			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
 	}
@@ -569,6 +635,7 @@ namespace RMImGui {
 					data.project_path = RMIO::PathGetDirectoryPart(file.path);
 					data.scripts = im.scripts;
 					data.cam_data = im.cam_data;
+					data.lights = im.lights;
 					for (int i = 0; i < data.scripts.size(); i++) {
 						data.scripts[i].compile();
 					}
@@ -617,6 +684,7 @@ namespace RMImGui {
 				data.cam_pos = im.cam_pos;
 				data.cam_py = im.cam_py;
 				data.globals = im.globals;
+				data.lights = im.lights;
 				data.engine_state = GameEngineState::Engine;
 				for (int i = 0; i < data.scripts.size(); i++) {
 					data.scripts[i].compile();
@@ -657,13 +725,6 @@ namespace RMImGui {
 		DisplayEngine(data);
 		ImGui::End();
 
-		ImGui::Begin("Debug");
-
-		ImGui::KeyframeDragFloat(&data, "Camera->Focal length", "Focal length", data.timeline.frame, &data.cam_data.focal_length, 0.01f, 0.f, 20.f);
-		ImGui::KeyframeDragFloat(&data, "Camera->Focus distance", "Focus distance", data.timeline.frame, &data.cam_data.focus_dist, 0.01f, 0.f, 20.f);
-		ImGui::KeyframeDragFloat(&data, "Camera->Apeture size", "Apeture size", data.timeline.frame, &data.cam_data.apeture_size, 0.01f, 0.f, 20.f);
-
-		ImGui::End();
 
 
 		auto windows = std::vector<AnimationWindow>();

@@ -18,14 +18,15 @@ uniform float apeture_size;
 #define MAX_DIST 100.
 #define MIN_DIST 0.0001
 #define MOD_COUNT 3
-#define MAX_PRIM_COUNT 10
-float s, c;
+#define MAX_PRIM_COUNT 5
+//$define MOD_COUNT $MAX_MOD_COUNT
+//$define MAX_PRIM_COUNT $MAX_PRIM_COUNT
 
 struct DistanceResult {
     float distance;
 };
 
-$structs.shader
+//$ include structs.shader
 
 layout(std430, binding = 0) buffer PrimitiveBlock {
     Primitive primitives[];
@@ -34,11 +35,11 @@ layout(std430, binding = 0) buffer PrimitiveBlock {
 layout(std430, binding = 1) buffer GroupModifierBlock {
     GroupModifier group_modifier[];
 };
-
+//$IF LIGHTS
 layout(std430, binding = 2) buffer LightBlock {
     Light lights[];
 };
-
+//$END_IF
 uniform vec2 u_resolution;
 uniform vec3 camera_pos;
 uniform vec3 camera_pos_render;
@@ -56,9 +57,9 @@ struct RayMarchResult {
     int iters;
 };
 
-$helpers.shader
-$sdf.shader
-$mods.shader
+//$ include helpers.shader
+//$ include sdf.shader
+//$ include mods.shader
 
 //float renderCamera(vec3 pt) {
 //    vec3 transformed = camera_pos_render - pt;
@@ -173,11 +174,11 @@ RayMarchResult rayMarch(Ray r) {
 
 // input: point to be shaded
 // output: light value
-float getLight(vec3 pt) {
-    float diff = 0.0;
+//$IF LIGHTS
+vec3 getLight(vec3 pt, vec3 ptNormal) {
+    vec3 diff = vec3(0.0);
     for(int i = 0; i < lights.length(); i++){
         if(lights[i].type == 1){ // Point Light
-            vec3 ptNormal = getNormal(pt);
             vec3 lightDir = vec3(lights[i].attribute0 - pt.x, lights[i].attribute1 - pt.y, lights[i].attribute2 - pt.z);
             float dist2 = dot(lightDir, lightDir);
             float dist = sqrt(dist2);
@@ -189,11 +190,16 @@ float getLight(vec3 pt) {
             if(shadowRayDist.dist < dist){
                 continue;
             }
-            diff += clamp(dot(ptNormal, lightDir), 0., 1.) * (1.0 / (4.0 * 3.141569 * dist2));
-            
+            float dif = clamp(dot(ptNormal, lightDir), 0., 1.) * (1.0 / (4.0 * 3.141569 * dist2));
+
+            diff += dif * vec3(lights[i].colorR, lights[i].colorG, lights[i].colorB);
+        }else if(lights[i].type == 2){
+        vec3 lightDir = vec3(lights[i].attribute0, lights[i].attribute1, lights[i].attribute2);
+            float dif = clamp(dot(ptNormal, -lightDir), 0., 1.);
+            diff += dif * vec3(lights[i].colorR, lights[i].colorG, lights[i].colorB);
         }
     }
-    return diff * 300.0;
+    return diff;
 //    vec3 ptNormal = getNormal(pt);
 //
 //    vec3 lightDir = vec3(6.0 - pt.x, 2.0 - pt.y, 2.0 - pt.z);
@@ -208,6 +214,8 @@ float getLight(vec3 pt) {
 //    float dif = clamp(dot(ptNormal, lightDir), 0., 1.);
 //    return dif * (1.0 / (4.0 * 3.141569 * dist2)) * 300.0;
 }
+//$END_IF
+
 vec3 getNormalColor(vec3 pt) {
     // normal direction from pt
     vec3 ptNormal = getNormal(pt);
@@ -232,9 +240,13 @@ vec4 run(vec2 uvOrig, int cursample)
 
     vec3 intersectPt = r.ori + r.dir * dist.dist;
     vec3 color = vec3(1.0, 1.0, 1.0);
-    float dif = getLight(intersectPt);
+    vec3 ptNormal = getNormal(intersectPt);
 
-    color *= vec3(dif) * .5;
+    //$IF LIGHTS
+    vec3 light = getLight(intersectPt, ptNormal);
+    color *= light;
+    //$END_IF
+
     if (dist.hit) {
         color = max(color, vec3(0.12, 0.12, 0.12));
         

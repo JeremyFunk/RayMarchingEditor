@@ -46,20 +46,24 @@ namespace ImGui {
         if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_K)) {
             v->AddKeyframe(frame, v->value);
             data->recalculate = true;
+            data->rerender = true;
         }
         else if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_B)) {
             data->addWindow(v, name);
             v->mode = AnimatedFloatMode::Bezier;
             res.graph = true;
-            data->recalculate = true;
+            data->rerender = true;
         }
         else if (ImGui::IsItemHovered() && ImGui::IsKeyReleased(ImGuiKey_C)) {
             data->addWindow(v, name);
             v->mode = AnimatedFloatMode::Code;
             res.code = true;
-            data->recalculate = true;
+            data->rerender = true;
         }
 
+        if (res.clicked) {
+            data->rerender = true;
+        }
        /* if (res.clicked || res.code || res.graph)
             data->recalculate = true;*/
 

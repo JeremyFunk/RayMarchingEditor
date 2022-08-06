@@ -197,27 +197,33 @@ namespace RMImGui {
 
     struct Light {
         int type;
-        float attribute0;
-        float attribute1;
-        float attribute2;
-        glm::vec3 color;
+        AnimatedFloat attribute0;
+        AnimatedFloat attribute1;
+        AnimatedFloat attribute2;
+        AnimatedFloatVec3 color;
+        AnimatedFloat intensity;
+        std::string name;
 
-        static Light PointLight(glm::vec3 position, glm::vec3 color) {
+        static Light PointLight(glm::vec3 position, glm::vec3 color, AnimatedFloat intensity) {
             Light l;
             l.attribute0 = position.x;
             l.attribute1 = position.y;
             l.attribute2 = position.z;
             l.color = color;
             l.type = 1;
+            l.intensity = intensity;
+            l.name = "Point Light";
             return l;
         }
-        static Light DirectionalLight(glm::vec3 direction, glm::vec3 color) {
+        static Light DirectionalLight(glm::vec3 direction, glm::vec3 color, AnimatedFloat intensity) {
             Light l;
             l.attribute0 = direction.x;
             l.attribute1 = direction.y;
             l.attribute2 = direction.z;
             l.color = color;
             l.type = 2;
+            l.name = "Directional Light";
+            l.intensity = intensity;
             return l;
         }
 
@@ -288,6 +294,7 @@ namespace RMImGui {
         std::string project_path;
         float dragData;
         bool recalculate = false;
+        bool rerender = false;
         Textures textures;
         TimelineData timeline;
         GameEngineState engine_state = GameEngineState::Start;
