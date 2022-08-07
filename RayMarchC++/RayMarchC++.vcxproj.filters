@@ -217,7 +217,7 @@
     <None Include="structs.shader.compiled">
       <Filter>Source Files\shaders\compiled</Filter>
     </None>
-    <None Include="cs.comp.compiled">
+    <None Include="css.comp">
       <Filter>Source Files\shaders\compiled</Filter>
     </None>
     <None Include="helpers.shader.compiled">

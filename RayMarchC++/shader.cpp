@@ -83,48 +83,16 @@ namespace Shader {
 		glUniform1i(uniforms.u_group_count, mod_count);
 	}
 
-	std::string MergeShader(const char* shader_file) {
-		std::string shaderCode, line;
-		std::ifstream shaderStream(shader_file, std::ios::in);
-		if (shaderStream.is_open()) {
-
-			while (std::getline(shaderStream, line))
-			{
-				if (line.length() > 1 && line[0] == '$') {
-					line.erase(0, 1);
-					shaderCode += MergeShader(line.c_str());
-				}
-				else {
-					shaderCode += line + "\n";
-				}
-			}
-			shaderStream.close();
-
-			std::ofstream shaderCompiled(std::string(shader_file) + ".compiled", std::ios_base::out);
-			shaderCompiled << shaderCode;
-			shaderCompiled.close();
-			return shaderCode;
-		}
-		else {
-			printf("Cannot open %s!\n", shader_file);
-			getchar();
-			return "";
-		}
-	}
-
-	GLuint LoadComputeShader(const char* compute_shader_file_path) {
-
+	GLuint LoadComputeShader(std::string content, std::string name) {
 		// Create the shaders
 		GLuint ID = glCreateShader(GL_COMPUTE_SHADER);
 
-		// Read the Vertex Shader code from the file
-		std::string ComputeShaderCode = MergeShader(compute_shader_file_path);
 		GLint Result = GL_FALSE;
 		int InfoLogLength;
 
 		// Compile Vertex Shader
-		printf("Compiling compute shader : %s\n", compute_shader_file_path);
-		char const* ComputeSourcePointer = ComputeShaderCode.c_str();
+		printf("Compiling compute shader : %s\n", name);
+		char const* ComputeSourcePointer = content.c_str();
 		glShaderSource(ID, 1, &ComputeSourcePointer, NULL);
 		glCompileShader(ID);
 
@@ -158,6 +126,24 @@ namespace Shader {
 		glDeleteShader(ID);
 
 		return ProgramID;
+	}
+
+	GLuint LoadComputeShaderByPath(const char* compute_file_path) {
+		std::string CompShaderCode;
+		std::ifstream CompShaderStream(compute_file_path, std::ios::in);
+		if (CompShaderStream.is_open()) {
+			std::stringstream sstr;
+			sstr << CompShaderStream.rdbuf();
+			CompShaderCode = sstr.str();
+			CompShaderStream.close();
+		}
+		else {
+			printf("Cannot open %s!\n", compute_file_path);
+			getchar();
+			return 0;
+		}
+
+		LoadComputeShader(CompShaderCode, compute_file_path);
 	}
 
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {

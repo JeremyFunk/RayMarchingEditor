@@ -5,7 +5,7 @@
 #include <unistd.h>
 #endif
 #include <cstdlib>
-
+#include "fglsl.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -43,7 +43,6 @@ using namespace glm;
 #include "free_cam.h"
 #include "imgui_handler.h"
 #include "scene.h"
-#include "fglsl.h"
 int screen_width = 1920;
 int screen_height = 1080;
 float lastX = screen_width / 2.0f;
@@ -289,39 +288,38 @@ void recompile(LuaContext &lua, RMImGui::ScriptData &c) {
 
 int main()
 {
-	auto fglsl = FGLSL::Preprare("cs.comp");
-	/*for (auto c : fglsl.conditional) {
-		std::cout << c.name << std::endl;
-	}
-	for (auto c : fglsl.tokens) {
-		std::cout << c.name << std::endl;
-	}*/
-	fglsl.SetValue("MAX_PRIM_COUNT", "20");
-	fglsl.SetValue("MAX_PRIM_COUNT", "30");
-	fglsl.SetValue("MAX_MOD_COUNT", "30");
-	fglsl.SetValue("MAX_MOD_COUNT", "40");
-	fglsl.SetCondition("LIGHTS", false);
-	fglsl.SetCondition("LIGHTS", true);
+	//auto fglsl = FGLSL::LoadFGLSL("cs.comp");
+	///*for (auto c : fglsl.conditional) {
+	//	std::cout << c.name << std::endl;
+	//}
+	//for (auto c : fglsl.tokens) {
+	//	std::cout << c.name << std::endl;
+	//}*/
+	//fglsl.SetValue("MAX_PRIM_COUNT", "20");
+	//fglsl.SetValue("MAX_PRIM_COUNT", "30");
+	//fglsl.SetValue("MAX_MOD_COUNT", "30");
+	//fglsl.SetValue("MAX_MOD_COUNT", "40");
+	//fglsl.SetCondition("LIGHTS", false);
+	//fglsl.SetCondition("LIGHTS", true);
 
-	auto shaders = FGLSL::GenerateShaders(fglsl);
+	//auto shaders = FGLSL::GenerateShaders(fglsl);
+	//for (auto c : shaders.shaders) {
+	//	for (auto s : c.settings) {
+	//		std::cout << s.name << s.value << std::endl;
+	//	}
+	//	for (auto s : c.conditions) {
+	//		std::cout << s.name << s.active << std::endl;
+	//	}
+	//	std::cout << std::endl;
+	//}
 
-	for (auto c : shaders.shaders) {
-		for (auto s : c.settings) {
-			std::cout << s.name << s.value << std::endl;
-		}
-		for (auto s : c.conditions) {
-			std::cout << s.name << s.active << std::endl;
-		}
-		std::cout << std::endl;
-	}
+	//shaders.SetValue("MAX_MOD_COUNT", "40");
+	//shaders.SetValue("MAX_PRIM_COUNT", "30");
+	//shaders.SetCondition("LIGHTS", true);
+	//auto shader = shaders.GetShader();
+	//
+	//std::cout << shader->code;
 
-	shaders.SetValue("MAX_MOD_COUNT", "40");
-	shaders.SetValue("MAX_PRIM_COUNT", "30");
-	shaders.SetConditional("LIGHTS", true);
-	auto shader = shaders.GetShader();
-	std::cout << shader.code;
-
-	return 0;
 	LuaContext lua;
 
 	if (!RMIO::SetupDirectories()) {
@@ -338,8 +336,21 @@ int main()
 	// Create and compile our GLSL program from the shaders
 	GLuint realtimeVFShader = Shader::LoadShaders("vertex.vs", "fragment.fs");
 	GLuint computeVFShader = Shader::LoadShaders("vertex.vs", "cs.fs");
-	GLuint computeCS = Shader::LoadComputeShader("cs.comp");
-	GLuint computeResetCS = Shader::LoadComputeShader("reset.comp");
+
+	auto fglsl = FGLSL::LoadFGLSL("cs.comp");
+	fglsl.SetCondition("LIGHTS", true);
+	fglsl.SetCondition("LIGHTS", false);
+	fglsl.SetValue("MAX_PRIM_COUNT", "10");
+
+	auto shaders = FGLSL::GenerateShaders(fglsl);
+	shaders.SetCondition("LIGHTS", true);
+	shaders.SetValue("MAX_PRIM_COUNT", "10");
+	auto shader_code = shaders.GetShader();
+
+	RMIO::Save("cs.compiled.comp", shader_code->code);
+
+	GLuint computeCS = Shader::LoadComputeShader(shader_code->code);
+	GLuint computeResetCS = Shader::LoadComputeShaderByPath("reset.comp");
 
 	auto realtimeUniforms = Shader::LoadUniforms(realtimeVFShader);
 	auto computeVFUniforms = Shader::LoadComputeShaderFragmentUniforms(computeVFShader);

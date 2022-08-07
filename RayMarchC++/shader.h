@@ -84,7 +84,8 @@ namespace Shader {
 	GLuint LoadUniform(const GLuint program, const char* uniform);
 
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path);
-	GLuint LoadComputeShader(const char* compute_file_path);
+	GLuint LoadComputeShader(std::string content, std::string name = "Compute Shader");
+	GLuint LoadComputeShaderByPath(const char* compute_file_path);
 
 	ShaderUniforms LoadUniforms(const GLuint program);
 	ComputeShaderUniforms LoadComputeShaderUniforms(const GLuint program);

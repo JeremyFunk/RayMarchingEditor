@@ -18,15 +18,13 @@ uniform float apeture_size;
 #define MAX_DIST 100.
 #define MIN_DIST 0.0001
 #define MOD_COUNT 3
-#define MAX_PRIM_COUNT 5
-//$define MOD_COUNT $MAX_MOD_COUNT
-//$define MAX_PRIM_COUNT $MAX_PRIM_COUNT
+//$DEFINE MAX_PRIM_COUNT $MAX_PRIM_COUNT
 
 struct DistanceResult {
     float distance;
 };
 
-//$ include structs.shader
+//$INCLUDE structs.shader
 
 layout(std430, binding = 0) buffer PrimitiveBlock {
     Primitive primitives[];
@@ -57,9 +55,9 @@ struct RayMarchResult {
     int iters;
 };
 
-//$ include helpers.shader
-//$ include sdf.shader
-//$ include mods.shader
+//$INCLUDE helpers.shader
+//$INCLUDE sdf.shader
+//$INCLUDE mods.shader
 
 //float renderCamera(vec3 pt) {
 //    vec3 transformed = camera_pos_render - pt;
