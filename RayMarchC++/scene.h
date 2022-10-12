@@ -25,6 +25,7 @@ namespace Scene {
         AnimatedFloat values[10];
         std::string name;
         std::vector<SceneModifier> modifiers;
+        int material;
     };
 
     struct SceneScript {
@@ -45,15 +46,25 @@ namespace Scene {
         int type;
     };
 
+    struct SceneMaterial {
+        std::string name;
+        AnimatedFloat roughness;
+        AnimatedFloat metallic;
+        AnimatedFloat transmission, ior;
+        AnimatedFloatVec3 albedo;
+    };
+
     struct Scene {
         std::vector<SceneObject> objects = std::vector<SceneObject>();
         std::vector<SceneGroupModifier> group_modifiers = std::vector<SceneGroupModifier>();
         std::vector<SceneScript> scripts = std::vector<SceneScript>();
         std::vector<SceneLight> lights = std::vector<SceneLight>();
+        std::vector<SceneMaterial> materials = std::vector<SceneMaterial>();
         std::string directory;
         RMImGui::CameraData cam_data;
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py; 
+        int samples;
         std::vector<SceneGlobal> globals = std::vector<SceneGlobal>();
     };
 

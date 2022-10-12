@@ -11,13 +11,24 @@ namespace Scene {
 
     Scene createScene(RMImGui::ImGuiData& data) {
         Scene scene;
-        scene.objects = std::vector<SceneObject>();
-        scene.group_modifiers = std::vector<SceneGroupModifier>();
-        scene.scripts = std::vector<SceneScript>();
         scene.cam_pos = data.cam_pos;
         scene.cam_py = data.cam_py;
         scene.directory = data.project_path;
         scene.cam_data = data.cam_data;
+        scene.samples = data.samples;
+
+        for (int i = 1; i < data.materials.count; i++) {
+            if (data.materials[i].active) {
+                SceneMaterial sceneMat;
+                sceneMat.albedo = data.materials[i].albedo;
+                sceneMat.roughness = data.materials[i].roughness;
+                sceneMat.metallic = data.materials[i].metallic;
+                sceneMat.transmission = data.materials[i].transmission;
+                sceneMat.ior = data.materials[i].ior;
+                sceneMat.name = data.materials[i].name;
+                scene.materials.push_back(sceneMat);
+            }
+        }
 
         for (int i = 0; i < data.lights.count; i++) {
             if (data.lights[i].type != 0) {
@@ -42,6 +53,7 @@ namespace Scene {
                 object.scale = data.primitives[i].transformation.scale;
                 object.prim_type = data.primitives[i].prim_type;
                 object.name = data.primitives[i].name;
+                object.material = data.primitives[i].material;
                 for (int j = 0; j < 10; j++) {
                     object.values[j] = data.primitives[i].values[j];
                 }
@@ -167,6 +179,19 @@ namespace Scene {
         std::vector<json> group_modifiers = std::vector<json>();
         std::vector<json> globals = std::vector<json>();
         std::vector<json> lights = std::vector<json>();
+        std::vector<json> materials = std::vector<json>();
+
+        for (int i = 0; i < scene.materials.size(); i++) {
+            json m;
+            animatedFloatToJson(scene.materials[i].ior, scene, m["ior"]);
+            animatedFloatToJson(scene.materials[i].transmission, scene, m["transmission"]);
+            animatedFloatToJson(scene.materials[i].metallic, scene, m["metallic"]);
+            animatedFloatToJson(scene.materials[i].roughness, scene, m["roughness"]);
+            animatedVectorToJson(scene.materials[i].albedo, scene, m["albedo"]);
+            m["name"] = scene.materials[i].name;
+
+            materials.push_back(m);
+        }
 
         for (int i = 0; i < scene.lights.size(); i++) {
             json l;
@@ -206,6 +231,7 @@ namespace Scene {
 
             o["modifiers"] = modifiers;
             o["name"] = scene.objects[i].name;
+            o["material"] = scene.objects[i].material;
 
             objects.push_back(o);
         }
@@ -236,6 +262,8 @@ namespace Scene {
         j["group_modifiers"] = group_modifiers;
         j["globals"] = globals;
         j["lights"] = lights;
+        j["samples"] = scene.samples;
+        j["materials"] = materials;
         animatedVectorToJson(scene.cam_pos, scene, j["camera"]["cam_pos"]);
         animatedVector2ToJson(scene.cam_py, scene, j["camera"]["cam_py"]);
 
@@ -266,6 +294,17 @@ namespace Scene {
             s.scripts.push_back(ss);
         }
 
+        for (int i = 0; i < j["materials"].size(); i++) {
+            SceneMaterial m;
+            m.ior = jsonToAnimatedFloat(j["materials"][i]["ior"], s);
+            m.transmission = jsonToAnimatedFloat(j["materials"][i]["transmission"], s);
+            m.metallic = jsonToAnimatedFloat(j["materials"][i]["metallic"], s);
+            m.roughness = jsonToAnimatedFloat(j["materials"][i]["roughness"], s);
+            m.albedo = jsonToAnimatedVector3(j["materials"][i]["albedo"], s);
+            m.name = j["materials"][i]["name"];
+            s.materials.push_back(m);
+        }
+
         for (int i = 0; i < j["lights"].size(); i++) {
             SceneLight l;
             l.attribute0 = jsonToAnimatedFloat(j["lights"][i]["attribute0"], s);
@@ -284,6 +323,8 @@ namespace Scene {
         s.cam_data.apeture_size = jsonToAnimatedFloat(j["camera"]["apeture_size"], s);
         s.cam_data.focal_length = jsonToAnimatedFloat(j["camera"]["focal_length"], s);
         s.cam_data.focus_dist = jsonToAnimatedFloat(j["camera"]["focus_dist"], s);
+        s.samples = j["samples"];
+
         for (int i = 0; i < j["objects"].size(); i++) {
             json jo = j["objects"][i];
             SceneObject o;
@@ -293,6 +334,7 @@ namespace Scene {
             o.scale = jsonToAnimatedVector3(jo["scale"], s);
 
             o.name = jo["name"].get<std::string>();
+            o.material = jo["material"].get<std::int32_t>();
 
             o.prim_type = jo["prim_type"];
             for (int n = 0; n < jo["values"].size(); n++) {
@@ -366,6 +408,23 @@ namespace Scene {
             d.globals.push_back(g);
         }
 
+        auto defM = RMImGui::Material::DefaultMaterial();
+        defM.name = "Default Material";
+        d.materials.AddElement(defM);
+
+        for (int i = 0; i < scene.materials.size(); i++) {
+            RMImGui::Material m;
+            m.name = scene.materials[i].name;
+            m.active = true;
+            m.albedo = scene.materials[i].albedo;
+            m.roughness = scene.materials[i].roughness;
+            m.metallic = scene.materials[i].metallic;
+            m.transmission = scene.materials[i].transmission;
+            m.ior = scene.materials[i].ior;
+
+            d.materials.AddElement(m);
+        }
+
         for (int i = 0; i < scene.lights.size(); i++) {
             RMImGui::Light l;
             l.name = scene.lights[i].name;
@@ -399,6 +458,7 @@ namespace Scene {
         d.cam_pos = scene.cam_pos;
         d.cam_py = scene.cam_py;
         d.cam_data = scene.cam_data;
+        d.samples = scene.samples;
 
         for (int i = 0; i < scene.objects.size(); i++) {
             Primitive::ShaderPrimitive p;
@@ -428,6 +488,7 @@ namespace Scene {
             Primitive::updateTransformation(&p);
             
             p.name = scene.objects[i].name;
+            p.material = scene.objects[i].material;
 
             p.prim_type = scene.objects[i].prim_type;
             

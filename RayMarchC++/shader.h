@@ -33,6 +33,8 @@ namespace Shader {
 		GLfloat m23;
 		GLfloat position[3];
 		GLint prim_type;
+		GLint material;
+		GLfloat dummy[3];
 	};
 
 	struct SSBOGroupModifier {
@@ -50,6 +52,13 @@ namespace Shader {
 		GLfloat attribute2;
 		GLfloat colorR, colorG, colorB;
 		GLint type;
+	};
+
+	struct SSBOMaterial {
+		GLfloat roughness;
+		GLfloat metallic;
+		GLfloat albedoR, albedoG, albedoB;
+		GLfloat transmission, ior;
 	};
 
 	struct ShaderUniforms {
@@ -72,7 +81,8 @@ namespace Shader {
 
 	struct ComputeShaderUniforms {
 		GLuint offsetX, offsetY, t, number_samples, total_samples, current_sample;
-		GLuint camera_pos_render; 
+		GLuint camera_pos_render;
+		GLuint render_mode_data1, render_mode_data2, render_mode, show_bounce;
 		GLuint camera_dir_render; 
 		GLuint camera_pos;
 		GLuint camera_rot;

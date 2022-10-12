@@ -3,7 +3,7 @@
 #define MAX_DIST 100.
 #define MIN_DIST 0.0001
 #define MOD_COUNT 3
-#define MAX_PRIM_COUNT 50
+#define MAX_PRIM_COUNT 10
 float s, c;
 #define rotate(p, a) mat2(c=cos(a), s=-sin(a), -s, c) * p
 
@@ -31,6 +31,7 @@ struct Primitive {
     mat3 transformation;
     vec3 position;
     int prim_type; // 1 = Sphere, 2 = Torus, 3 = Cube, 4 = Mandelbulb, 5 = Julia 4D-Quat
+    int material;
 };
 
 struct GroupModifier {
@@ -362,7 +363,7 @@ RayMarchResult rayMarch(ray r) {
         if (marchDist > MAX_DIST) {
             break;
         }
-        if (distToScene.distance < MIN_DIST) {
+        if (abs(distToScene.distance) < MIN_DIST) {
             hit = true;
             break;
         }

@@ -50,27 +50,35 @@ float modify_distance(float d, int i) {
     return d;
 }
 
-float op(float d1, float d2, GroupModifier m) {
-    if (m.modifier == 1) { // Union
-        return min(d1, d2);
-    }
-    else if (m.modifier == 2) { // Subtraction
-        return max(-d1, d2);
+OperationResult op(float d1, float d2, GroupModifier m) {
+    if (m.modifier == 2) { // Subtraction
+        if (-d1 > d2) {
+            return OperationResult(-d1, 0.0);
+        }
+        return OperationResult(d2, 1.0);
     }
     else if (m.modifier == 3) { // Intersection
-        return max(d1, d2);
+        if (d1 > d2) {
+            return OperationResult(d1, 0.0);
+        }
+        return OperationResult(d2, 1.0);
     }
     else if (m.modifier == 4) { // Smooth Union
         float h = clamp(0.5 + 0.5 * (d2 - d1) / m.primAttribute, 0.0, 1.0);
-        return mix(d2, d1, h) - m.primAttribute * h * (1.0 - h);
+        return OperationResult(mix(d2, d1, h) - m.primAttribute * h * (1.0 - h), h);
     }
     else if (m.modifier == 5) { // Smooth Subtraction
         float h = clamp(0.5 - 0.5 * (d2 + d1) / m.primAttribute, 0.0, 1.0);
-        return mix(d2, -d1, h) + m.primAttribute * h * (1.0 - h);
+        return OperationResult(mix(d2, -d1, h) + m.primAttribute * h * (1.0 - h), h);
     }
     else if (m.modifier == 6) { // Smooth Intersection
         float h = clamp(0.5 - 0.5 * (d2 - d1) / m.primAttribute, 0.0, 1.0);
-        return mix(d2, d1, h) + m.primAttribute * h * (1.0 - h);
+        return OperationResult(mix(d2, d1, h) + m.primAttribute * h * (1.0 - h), h);
     }
-    return min(d1, d2);
+
+    // Union or invalid
+    if (d1 < d2) {
+        return OperationResult(d1, 0.0);
+    }
+    return OperationResult(d2, 1.0);
 }

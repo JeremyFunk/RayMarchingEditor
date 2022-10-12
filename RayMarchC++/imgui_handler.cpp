@@ -185,6 +185,18 @@ namespace RMImGui {
 			DisplayModifiers(data, p, i, data->timeline.frame);
 		}
 
+
+		if (ImGui::BeginCombo("##materialSelect", "Select Material")) {
+			for (int i = 0; i < data->materials.count; i++) {
+				if (ImGui::Selectable(data->materials[i].name.c_str(), i == p->material)) {
+					data->recalculate = true;
+					p->material = i;
+				}
+			}
+			
+			ImGui::EndCombo();
+		}
+
 		auto clicked = ImGui::Button("Delete");
 		if (clicked) {
 			data->primitives[element].prim_type = 0;
@@ -447,6 +459,34 @@ namespace RMImGui {
 			AnimatedFloat* p3[3] = { &l->attribute0, &l->attribute1, &l->attribute2 };
 			ImGui::KeyframeDragFloat3(data, "Light/Direction", "Direction", data->timeline.frame, p3, 0.01, -500.0, 500.0, "%.3f", 0);
 		}
+
+		if (ImGui::Button("Delete")) {
+			data->lights.RemoveElement(i);
+		}
+	}
+
+	void DisplayMaterial(ImGuiData* data, int i) {
+		if (i == 0) {
+			ImGui::Text("The default material cannot be changed or deleted!");
+			return;
+		}
+		auto m = &data->materials[i];
+		float p3[] = { m->albedo[0].value, m->albedo[1].value, m->albedo[2].value };
+
+		if (ImGui::ColorPicker3("Albedo", p3)) {
+			m->albedo[0].value = p3[0];
+			m->albedo[1].value = p3[1];
+			m->albedo[2].value = p3[2];
+			data->rerender = true;
+		}
+		ImGui::KeyframeDragFloat(data, "Material/Rougness", "Roughness", data->timeline.frame, &m->roughness, 0.001f, 0.0f, 1.f);
+		ImGui::KeyframeDragFloat(data, "Material/Metallic", "Metallic", data->timeline.frame, &m->metallic, 0.001f, 0.0f, 1.f);
+		ImGui::KeyframeDragFloat(data, "Material/Transmission", "Transmission", data->timeline.frame, &m->transmission, 0.001f, 0.0f, 1.f);
+		ImGui::KeyframeDragFloat(data, "Material/IOR", "IOR", data->timeline.frame, &m->ior, 0.001f, 0.0f, 4.f);
+
+		if (ImGui::Button("Delete")) {
+			data->materials.RemoveElement(i);
+		}
 	}
 
 	void DisplayObjects(ImGuiData* data) {
@@ -545,33 +585,104 @@ namespace RMImGui {
 			ImGui::EndTabItem();
 		}
 
+		if (ImGui::BeginTabItem("Materials")) {
+			if (ImGui::CollapsingHeader("General"))
+			{
+				if (ImGui::Button("Add Material"))
+				{
+					auto prim = RMImGui::Material::DefaultMaterial();
+					data->materials.AddElement(prim);
+				}
+			}
+
+			if (ImGui::CollapsingHeader("Materials"))
+			{
+				for (int i = 0; i < data->materials.count; i++) {
+					auto m = data->materials[i];
+					if (!m.active) {
+						continue;
+					}
+
+					if (ImGui::TreeNode(std::string(std::string(m.name) + "##" + std::to_string(i)).c_str()))
+					{
+						DisplayMaterial(data, i);
+						ImGui::TreePop();
+					}
+				}
+			}
+			ImGui::EndTabItem();
+		}
+
 		ImGui::EndTabBar();
 	}
 
 	void DisplayEngine(ImGuiData& data) {
 		ImGui::BeginTabBar("##tabs");
 		if (ImGui::BeginTabItem("Engine")) {
-			auto selected = "Light Shading";
-			if (*data.shading_mode == 1)
-				selected = "Normal Shading";
-			if (*data.shading_mode == 2)
-				selected = "Flat Shading";
-			if (*data.shading_mode == 3)
-				selected = "Render Shading";
+			{
+				auto selected = "Light Shading";
+				if (*data.shading_mode == 1)
+					selected = "Normal Shading";
+				if (*data.shading_mode == 2)
+					selected = "Flat Shading";
+				if (*data.shading_mode == 3)
+					selected = "Render Shading";
 
-			if (ImGui::BeginCombo("##shading_mode", selected)) {
-				if (ImGui::Selectable("Light Shading", true))
-					*data.shading_mode = 0;
-				if (ImGui::Selectable("Normal Shading", false))
-					*data.shading_mode = 1;
-				if (ImGui::Selectable("Flat Shading", false))
-					*data.shading_mode = 2;
-				if (ImGui::Selectable("Render Shading", false)) {
-					data.recalculate = true;
-					*data.shading_mode = 3;
+				if (ImGui::BeginCombo("##shader", selected)) {
+					if (ImGui::Selectable("Light Shading", true))
+						*data.shading_mode = 0;
+					if (ImGui::Selectable("Normal Shading", false))
+						*data.shading_mode = 1;
+					if (ImGui::Selectable("Flat Shading", false))
+						*data.shading_mode = 2;
+					if (ImGui::Selectable("Render Shading", false)) {
+						data.recalculate = true;
+						*data.shading_mode = 3;
+					}
+
+					ImGui::EndCombo();
 				}
+			}
 
-				ImGui::EndCombo();
+			{
+				auto selected = "Default Shading";
+				if (data.renderMode == RenderMode::Depth)
+					selected = "Depth Shading";
+
+				if (ImGui::BeginCombo("##shading", selected)) {
+					if (ImGui::Selectable("Default Shading", true)) {
+						data.recalculate = true;
+						data.renderMode = RenderMode::Default;
+					}
+					if (ImGui::Selectable("Depth Shading", false)) {
+						data.recalculate = true;
+						data.renderMode = RenderMode::Depth;
+					}
+
+					ImGui::EndCombo();
+				}
+			}
+
+			{
+				if (data.renderMode == RenderMode::Depth) {
+					if (ImGui::DragFloat("Min Depth", &data.minDepth, 0.01, 0.0, data.maxDepth))
+						data.recalculate = true;
+					if(ImGui::DragFloat("Max Depth", &data.maxDepth, 0.01, data.minDepth))
+						data.recalculate = true;
+				}
+			}
+
+			if (ImGui::InputInt("Bounces", &data.show_bounce)) {
+				data.recalculate = true;
+			}
+
+			if (ImGui::Button("Recompile Compute Shader")) {
+				data.recompileShader = true;
+				data.recalculate = true;
+			}
+
+			if (ImGui::InputInt("Samples", &data.samples)) {
+				data.recalculate = true;
 			}
 
 			ImGui::EndTabItem();
@@ -636,6 +747,8 @@ namespace RMImGui {
 					data.scripts = im.scripts;
 					data.cam_data = im.cam_data;
 					data.lights = im.lights;
+					data.materials = im.materials;
+					data.samples = im.samples;
 					for (int i = 0; i < data.scripts.size(); i++) {
 						data.scripts[i].compile();
 					}
@@ -685,6 +798,8 @@ namespace RMImGui {
 				data.cam_py = im.cam_py;
 				data.globals = im.globals;
 				data.lights = im.lights;
+				data.materials = im.materials;
+				data.samples = im.samples;
 				data.engine_state = GameEngineState::Engine;
 				for (int i = 0; i < data.scripts.size(); i++) {
 					data.scripts[i].compile();

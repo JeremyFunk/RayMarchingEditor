@@ -190,9 +190,6 @@
     <None Include="sdf.shader">
       <Filter>Source Files\shaders\shaders\parts</Filter>
     </None>
-    <None Include="structs.shader">
-      <Filter>Source Files\shaders\shaders\parts</Filter>
-    </None>
     <None Include="helpers.shader">
       <Filter>Source Files\shaders\shaders\parts</Filter>
     </None>
@@ -214,22 +211,7 @@
     <None Include="vertex.vs">
       <Filter>Source Files\shaders\shaders</Filter>
     </None>
-    <None Include="structs.shader.compiled">
-      <Filter>Source Files\shaders\compiled</Filter>
-    </None>
-    <None Include="css.comp">
-      <Filter>Source Files\shaders\compiled</Filter>
-    </None>
-    <None Include="helpers.shader.compiled">
-      <Filter>Source Files\shaders\compiled</Filter>
-    </None>
-    <None Include="mods.shader.compiled">
-      <Filter>Source Files\shaders\compiled</Filter>
-    </None>
-    <None Include="reset.comp.compiled">
-      <Filter>Source Files\shaders\compiled</Filter>
-    </None>
-    <None Include="sdf.shader.compiled">
+    <None Include="cs.compiled.comp">
       <Filter>Source Files\shaders\compiled</Filter>
     </None>
   </ItemGroup>

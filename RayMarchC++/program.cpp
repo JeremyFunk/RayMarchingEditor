@@ -286,6 +286,23 @@ void recompile(LuaContext &lua, RMImGui::ScriptData &c) {
 	c.recompile = false;
 }
 
+GLint recompileShader(Shader::ComputeShaderUniforms& uniforms) {
+	auto fglsl = FGLSL::LoadFGLSL("cs.comp");
+	fglsl.SetCondition("LIGHTS", true);
+	fglsl.SetCondition("LIGHTS", false);
+	fglsl.SetValue("MAX_PRIM_COUNT", "10");
+
+	auto shaders = FGLSL::GenerateShaders(fglsl);
+	shaders.SetCondition("LIGHTS", true);
+	shaders.SetValue("MAX_PRIM_COUNT", "10");
+	auto shader_code = shaders.GetShader();
+
+	RMIO::Save("cs.compiled.comp", shader_code->code);
+	auto computeCS = Shader::LoadComputeShader(shader_code->code);
+	uniforms = Shader::LoadComputeShaderUniforms(computeCS);
+	return computeCS;
+}
+
 int main()
 {
 	//auto fglsl = FGLSL::LoadFGLSL("cs.comp");
@@ -336,25 +353,12 @@ int main()
 	// Create and compile our GLSL program from the shaders
 	GLuint realtimeVFShader = Shader::LoadShaders("vertex.vs", "fragment.fs");
 	GLuint computeVFShader = Shader::LoadShaders("vertex.vs", "cs.fs");
-
-	auto fglsl = FGLSL::LoadFGLSL("cs.comp");
-	fglsl.SetCondition("LIGHTS", true);
-	fglsl.SetCondition("LIGHTS", false);
-	fglsl.SetValue("MAX_PRIM_COUNT", "10");
-
-	auto shaders = FGLSL::GenerateShaders(fglsl);
-	shaders.SetCondition("LIGHTS", true);
-	shaders.SetValue("MAX_PRIM_COUNT", "10");
-	auto shader_code = shaders.GetShader();
-
-	RMIO::Save("cs.compiled.comp", shader_code->code);
-
-	GLuint computeCS = Shader::LoadComputeShader(shader_code->code);
+	Shader::ComputeShaderUniforms computeUniforms;
+	GLuint computeCS = recompileShader(computeUniforms);
 	GLuint computeResetCS = Shader::LoadComputeShaderByPath("reset.comp");
 
 	auto realtimeUniforms = Shader::LoadUniforms(realtimeVFShader);
 	auto computeVFUniforms = Shader::LoadComputeShaderFragmentUniforms(computeVFShader);
-	auto computeUniforms = Shader::LoadComputeShaderUniforms(computeCS);
 
 	auto prim1 = Primitive::getJuliaPrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
 	//auto prim1 = Primitive::getCubePrimitive(vec3(1.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0));
@@ -422,7 +426,6 @@ int main()
 
 	bool tiling = false;
 	int TILE_WIDTH = screen_width, TILE_HEIGHT = screen_height;
-	int SAMPLES = 256;
 	int SAMPLES_PER_ITER = 1;
 	int render_sample = 0;
 	int render_tile_x = 0;
@@ -470,8 +473,19 @@ int main()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_lights);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
+	unsigned int ssbo_materials;
+	glGenBuffers(1, &ssbo_materials);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_materials);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Shader::SSBOMaterial) * COUNT_MATERIALS, NULL, GL_DYNAMIC_DRAW);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_materials);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
 	data.lights.AddElement(RMImGui::Light::PointLight(glm::vec3(4, 4, 3), glm::vec3(0.2, 0.3, 0.4), 300.0));
 	
+	auto defMat = RMImGui::Material::DefaultMaterial();
+	defMat.name = "Default Material";
+	data.materials.AddElement(defMat);
+
 	float t = 0.0f;
 	do{
 		float currentFrame = static_cast<float>(glfwGetTime());
@@ -484,6 +498,12 @@ int main()
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
+		if (data.recompileShader) {
+			data.recompileShader = false;
+			glDeleteShader(computeCS);
+			computeCS = recompileShader(computeUniforms);
+		}
 
 		if (data.engine_state == RMImGui::GameEngineState::Start) {
 			RMImGui::RenderImGui(data);
@@ -542,6 +562,17 @@ int main()
 			if (moved || data.rerender) {
 				Shader::SSBOLight lights[COUNT_LIGHTS];
 				for (int i = 0; i < IM_ARRAYSIZE(data.lights.values); i++) {
+					if (!(data.lights[i].type == 1 || data.lights[i].type == 2)) {
+						lights[i].attribute0 = 0.0;
+						lights[i].attribute1 = 0.0;
+						lights[i].attribute2 = 0.0;
+						lights[i].colorR = 0.0;
+						lights[i].colorG = 0.0;
+						lights[i].colorB = 0.0;
+						lights[i].type = 0;
+						continue;
+					}
+
 					if (data.lights[i].type == 2) {
 						auto temp_vec = glm::normalize(glm::vec3(data.lights[i].attribute0.value, data.lights[i].attribute1.value, data.lights[i].attribute2.value));
 						lights[i].attribute0 = temp_vec.x;
@@ -561,15 +592,32 @@ int main()
 				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_lights);
 				glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(lights), &lights[0]);
 
+
+				Shader::SSBOMaterial materials[COUNT_MATERIALS];
+				for (int i = 0; i < IM_ARRAYSIZE(data.materials.values); i++) {
+					materials[i].albedoR = data.materials[i].albedo[0].value;
+					materials[i].albedoG = data.materials[i].albedo[1].value;
+					materials[i].albedoB = data.materials[i].albedo[2].value;
+
+					materials[i].transmission = data.materials[i].transmission.value;
+					materials[i].ior = data.materials[i].ior.value;
+					materials[i].roughness = data.materials[i].roughness.value;
+					materials[i].metallic = data.materials[i].metallic.value;
+				}
+				glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_materials);
+				glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(materials), &materials[0]);
+
+
 				Shader::SSBOPrimitive prims[COUNT_PRIMITIVE];
 				int i;
 				for (i = 0; i < IM_ARRAYSIZE(data.primitives); i++) {
+					prims[i].material = data.primitives[i].material;
+
 					prims[i].attribute0 = data.primitives[i].values[0].value;
 					prims[i].attribute1 = data.primitives[i].values[1].value;
 					prims[i].attribute2 = data.primitives[i].values[2].value;
 					prims[i].attribute3 = data.primitives[i].values[3].value;
 					prims[i].attribute4 = data.primitives[i].values[4].value;
-					prims[i].attribute5 = data.primitives[i].values[5].value;
 
 					prims[i].m00 = data.primitives[i].transformation.matrix[0][0];
 					prims[i].m01 = data.primitives[i].transformation.matrix[0][1];
@@ -622,8 +670,8 @@ int main()
 				{
 					glUseProgram(computeResetCS);
 					glDispatchCompute(
-						(unsigned int)screen_width,
-						(unsigned int)screen_height,
+						ceil((unsigned int)std::min(TILE_WIDTH, screen_width - render_tile_x * TILE_WIDTH) / 8),
+						ceil((unsigned int)std::min(TILE_HEIGHT, screen_height - render_tile_y * TILE_HEIGHT) / 4),
 						1
 					);
 
@@ -647,11 +695,15 @@ int main()
 
 				glUniform3f(computeUniforms.camera_pos_render, data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value);
 				glUniform1i(computeUniforms.u_prim_count, prim_count);
+				glUniform1i(computeUniforms.render_mode, (int) data.renderMode);
+				glUniform1i(computeUniforms.show_bounce, data.show_bounce);
+				glUniform1f(computeUniforms.render_mode_data1, data.minDepth);
+				glUniform1f(computeUniforms.render_mode_data2, data.maxDepth);
 				glFinish();
 				auto start = std::chrono::high_resolution_clock::now();
 				
-				if (render_sample < SAMPLES) {
-					Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, SAMPLES, SAMPLES_PER_ITER, render_sample, data.cam_data);
+				if (render_sample < data.samples) {
+					Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, data.samples, SAMPLES_PER_ITER, render_sample, data.cam_data);
 					if (tiling) {
 						glDispatchCompute(
 							ceil((unsigned int)std::min(TILE_WIDTH, screen_width - render_tile_x * TILE_WIDTH) / 8),
@@ -690,7 +742,7 @@ int main()
 				if(ms != 0)
 					std::cout << ms << "ms\n";
 				glUseProgram(computeVFShader);
-				Shader::PrepareComputeShaderFragment(computeVFUniforms, render_sample, SAMPLES);
+				Shader::PrepareComputeShaderFragment(computeVFUniforms, render_sample, data.samples);
 				glUniform2f(computeVFUniforms.u_resolution, float(screen_width), float(screen_height));
 
 			}else{

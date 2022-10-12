@@ -16,6 +16,9 @@ namespace RMImGui {
     enum class GameEngineState {
         Start, Engine,
     };
+    enum class RenderMode {
+        Default, Depth,
+    };
 
     struct TexturesTimeline {
         int play, pause, stop, next, previous, reverse_play, loop;
@@ -233,6 +236,38 @@ namespace RMImGui {
         }
     };
 
+
+    struct Material {
+        AnimatedFloat roughness;
+        AnimatedFloat metallic;
+        AnimatedFloat transmission, ior;
+        AnimatedFloatVec3 albedo;
+        bool active;
+        std::string name;
+
+        static Material DefaultMaterial() {
+            Material m;
+            m.albedo = glm::vec3(1.0);
+            m.metallic = 0.2;
+            m.roughness = 0.5;
+            m.transmission = 0.0;
+            m.ior = 1.45;
+            m.name = "Material";
+            m.active = true;
+            return m;
+        }
+
+        static Material Reset(Material m) {
+            m.albedo = glm::vec3(1.0);
+            m.metallic = 0.2;
+            m.roughness = 0.5;
+            m.transmission = 0.0;
+            m.ior = 1.45;
+            m.active = false;
+            return m;
+        }
+    };
+
     template <class T, int S, T(*Reset)(T)> class ManagedArray {
     public:
         T values[S];
@@ -282,9 +317,11 @@ namespace RMImGui {
 
     struct ImGuiData {
         int* shading_mode;
+        int samples = 2;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
         Primitive::ShaderGroupPrimitive groupPrimitives[COUNT_GROUP_MODIFIER];
         ManagedArray<Light, COUNT_LIGHTS, Light::Reset> lights = ManagedArray<Light, COUNT_LIGHTS, Light::Reset>();
+        ManagedArray<Material, COUNT_MATERIALS, Material::Reset> materials = ManagedArray<Material, COUNT_MATERIALS, Material::Reset>();
         glm::vec3 cam_rot;
         AnimatedFloatVec3 cam_pos;
         AnimatedFloatVec2 cam_py;
@@ -295,8 +332,12 @@ namespace RMImGui {
         float dragData;
         bool recalculate = false;
         bool rerender = false;
+        bool recompileShader = false;
         Textures textures;
         TimelineData timeline;
+        RenderMode renderMode = RenderMode::Default;
+        int show_bounce = 1;
+        float minDepth = 0.0, maxDepth = 4.0;
         GameEngineState engine_state = GameEngineState::Start;
         std::vector<AnimationWindow> windows = std::vector<AnimationWindow>();
         std::vector<ScriptData> scripts = std::vector<ScriptData>();

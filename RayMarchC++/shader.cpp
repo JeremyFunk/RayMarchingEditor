@@ -16,6 +16,10 @@ namespace Shader {
 		u.focal_length = LoadUniform(program, "focal_length");
 		u.focus_dist = LoadUniform(program, "focus_dist");
 
+		u.render_mode = LoadUniform(program, "render_mode");
+		u.show_bounce = LoadUniform(program, "show_bounce");
+		u.render_mode_data1 = LoadUniform(program, "render_mode_data1");
+		u.render_mode_data2 = LoadUniform(program, "render_mode_data2");
 		u.offsetX = LoadUniform(program, "xOffset");
 		u.offsetY = LoadUniform(program, "yOffset");
 		u.t = LoadUniform(program, "t");
@@ -143,7 +147,7 @@ namespace Shader {
 			return 0;
 		}
 
-		LoadComputeShader(CompShaderCode, compute_file_path);
+		return LoadComputeShader(CompShaderCode, std::string(compute_file_path));
 	}
 
 	GLuint LoadShaders(const char* vertex_file_path, const char* fragment_file_path) {

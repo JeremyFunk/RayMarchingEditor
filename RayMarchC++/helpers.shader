@@ -1,5 +1,6 @@
 ﻿
 float PHI = 1.61803398874989484820459;  // Φ = Golden Ratio   
+const float TWOPI = 2.0f * PI;
 
 float gold_noise(in vec2 xy, in float seed) {
     return clamp(fract(tan(distance(xy * PHI, xy) * seed) * xy.x), 0.0, 1.0);
@@ -46,4 +47,29 @@ vec2 randomInUnitDisk(float seed) {
     float phi = h.y;
     float r = sqrt(h.x);
     return r * vec2(sin(phi), cos(phi));
+}
+
+
+
+uint wang_hash(inout uint seed)
+{
+    seed = uint(seed ^ uint(61)) ^ uint(seed >> uint(16));
+    seed *= uint(9);
+    seed = seed ^ (seed >> 4);
+    seed *= uint(0x27d4eb2d);
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+float RandomFloat01(inout uint state)
+{
+    return float(wang_hash(state)) / 4294967296.0;
+}
+vec3 RandomUnitVector(inout uint state)
+{
+    float z = RandomFloat01(state) * 2.0f - 1.0f;
+    float a = RandomFloat01(state) * TWOPI;
+    float r = sqrt(1.0f - z * z);
+    float x = r * cos(a);
+    float y = r * sin(a);
+    return vec3(x, y, z);
 }

@@ -152,6 +152,7 @@ namespace Primitive {
 		int prim_type;
 		std::string name;
 		Transformation transformation;
+		int material = 0;
 
 		std::string to_string() {
 			return "{prim_type: " + std::to_string(prim_type) + ", name:" + std::string(name);
