@@ -150,7 +150,7 @@
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_tables.cpp" />
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_widgets.cpp" />
-    <ClCompile Include="arcball.cpp" />
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="free_cam.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="helpers_glm.cpp" />
@@ -162,7 +162,9 @@
     <ClCompile Include="program.cpp" />
     <ClCompile Include="RMIO.cpp" />
     <ClCompile Include="scene.cpp" />
+    <ClCompile Include="scripting.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\LuaContext.hpp" />
@@ -177,10 +179,8 @@
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_textedit.h" />
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_truetype.h" />
     <ClInclude Include="animator.h" />
-    <ClInclude Include="arcball.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="custom_imgui.h" />
-    <ClInclude Include="data.h" />
     <ClInclude Include="fglsl.h" />
     <ClInclude Include="free_cam.h" />
     <ClInclude Include="helpers_glm.h" />
@@ -193,7 +193,10 @@
     <ClInclude Include="primitive.h" />
     <ClInclude Include="RMIO.h" />
     <ClInclude Include="scene.h" />
+    <ClInclude Include="scripting.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="window.h" />
+    <ClInclude Include="window_data.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cs.comp" />

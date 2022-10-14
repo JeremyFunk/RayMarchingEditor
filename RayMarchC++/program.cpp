@@ -16,13 +16,7 @@
 #include <sstream>
 #include <fstream>
 #include <algorithm>
-
-// Include GLEW
-#include <GL/glew.h>
-
-// Include GLFW
-#include <GLFW/glfw3.h>
-GLFWwindow* window;
+#include "window.h"
 
 // Include GLM
 #include <glm/glm.hpp>
@@ -43,22 +37,14 @@ using namespace glm;
 #include "free_cam.h"
 #include "imgui_handler.h"
 #include "scene.h"
-int screen_width = 1920;
-int screen_height = 1080;
-float lastX = screen_width / 2.0f;
-float lastY = screen_height / 2.0f;
-bool firstMouse = true;
-bool enteredCam = false;
+#include "window.h"
+#include "camera.cpp"
 
 float deltaTime = 0.0f;	
 float lastFrame = 0.0f;
-bool moved = false;
-
-int cam_mode = 0;
 
 unsigned int samples_out, color_out, depth_out;
 
-Camera camera(glm::vec3(0.0, 0.0, 3.0));
 static RMImGui::ImGuiData data;
 
 enum ShadingMode {
@@ -67,117 +53,11 @@ enum ShadingMode {
 
 int shading_mode = ShadingMode::Light;
 
-void window_size_callback(GLFWwindow* window, int width, int height)
-{
-	screen_width = width;
-	screen_height = height;
-	glViewport(0, 0, screen_width, screen_height);
-
-
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, color_out);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-
-	//glBindImageTexture(0, color_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, samples_out);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, width, height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
-}
-
-void move() {
-	if (!data.reposition_cam) {
-		enteredCam = false;
-	}
-	moved = true;
-}
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
-	float xpos = static_cast<float>(xposIn);
-	float ypos = static_cast<float>(yposIn);
-
-	if (firstMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
-
-	float xoffset = lastX - xpos;
-	float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-	lastX = xpos;
-	lastY = ypos;
-
-	int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-
-	if (cam_mode == 1) {
-		camera.ProcessMouseMovement(xoffset, yoffset);
-		if (xoffset != 0 || yoffset != 0) {
-			move();
-		}
-	}
-}
-
-
-void processInput(GLFWwindow* window)
-{
-	bool moved = false;
-	if (cam_mode == 1) {
-		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.ProcessKeyboard(FORWARD, deltaTime);
-			moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera.ProcessKeyboard(BACKWARD, deltaTime);
-			moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-			camera.ProcessKeyboard(LEFT, deltaTime);
-			moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			camera.ProcessKeyboard(RIGHT, deltaTime);
-			moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			camera.ProcessKeyboard(UP, deltaTime);
-			moved = true;
-		}
-		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-			camera.ProcessKeyboard(DOWN, deltaTime);
-			moved = true;
-		}
-		if (moved) {
-			move();
-		}
-	}
-
-}
-
-bool update_camera() {
-	camera.Position = data.cam_pos.toVec();
-
-	//camera.Yaw = glm::degrees(atan2(data.cam_rot.x, data.cam_rot.z));
-	//camera.Pitch = glm::degrees(asin(-data.cam_rot.y));
-
-	auto front = vec3(camera.Front);
-	auto up = vec3(camera.Up);
-	auto right = vec3(camera.Right);
-	
-
-	camera.Yaw = data.cam_py[1].value;
-	camera.Pitch = data.cam_py[0].value;
-	camera.updateCameraVectors();
-
-	return camera.Front != front || camera.Up != up || camera.Right != right;
-}
-
-bool update_render_camera() {
+bool update_render_camera(CameraData& camera) {
 	float old_cam_pos[] = { data.cam_pos[0].value, data.cam_pos[1].value, data.cam_pos[2].value };
 	float old_cam_py[] = { data.cam_py[0].value, data.cam_py[1].value, data.cam_py[2].value };
-	float pitchRadians = to_radians(camera.Pitch);
-	float yawRadians = to_radians(camera.Yaw);
+	float pitchRadians = to_radians(camera.camera.Pitch);
+	float yawRadians = to_radians(camera.camera.Yaw);
 
 	float sinPitch = sin(pitchRadians);
 	float cosPitch = cos(pitchRadians);
@@ -185,105 +65,13 @@ bool update_render_camera() {
 	float cosYaw = cos(yawRadians);
 
  	data.cam_rot = glm::normalize(vec3(cosPitch * sinYaw, -sinPitch, cosPitch * cosYaw));
-	data.cam_pos[0].value = camera.Position[0];
-	data.cam_pos[1].value = camera.Position[1];
-	data.cam_pos[2].value = camera.Position[2];
-	data.cam_py[0].value = camera.Pitch;
-	data.cam_py[1].value = camera.Yaw;
+	data.cam_pos[0].value = camera.camera.Position[0];
+	data.cam_pos[1].value = camera.camera.Position[1];
+	data.cam_pos[2].value = camera.camera.Position[2];
+	data.cam_py[0].value = camera.camera.Pitch;
+	data.cam_py[1].value = camera.camera.Yaw;
 
 	return old_cam_pos[0] != data.cam_pos[0].value || old_cam_pos[1] != data.cam_pos[1].value || old_cam_pos[2] != data.cam_pos[2].value || old_cam_py[0] != data.cam_py[0].value || old_cam_py[1] != data.cam_py[1].value;
-}
-
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	if (key == GLFW_KEY_TAB && action == GLFW_RELEASE) {
-		if (cam_mode == 1) {
-			cam_mode = 0;
-		}
-		else {
-			cam_mode = 1;
-		}
-	}
-	if (key == GLFW_KEY_APOSTROPHE && action == GLFW_RELEASE) {
-		enteredCam = true;
-		moved = true;
-		update_camera();
-	}
-}
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	if (cam_mode == 1) {
-		camera.ProcessMouseScroll(static_cast<float>(yoffset));
-		if (yoffset != 0) {
-			move();
-		}
-	}
-}
-
-int setupWindow() {
-
-	// Initialise GLFW
-	if (!glfwInit())
-	{
-		fprintf(stderr, "Failed to initialize GLFW\n");
-		getchar();
-		return -1;
-	}
-
-	glfwWindowHint(GLFW_SAMPLES, 1);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // To make MacOS happy; should not be needed
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(screen_width, screen_height, "Ray Marching Editor", NULL, NULL);
-	if (window == NULL) {
-		fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-
-	// Initialize GLEW
-	glewExperimental = true; // Needed for core profile
-	if (glewInit() != GLEW_OK) {
-		fprintf(stderr, "Failed to initialize GLEW\n");
-		getchar();
-		glfwTerminate();
-		return -1;
-	}
-
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
-
-	// Dark blue background
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glfwSetWindowSizeCallback(window, window_size_callback);
-	glfwSetCursorPosCallback(window, mouse_callback);
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	return 0;
-}
-
-void recompile(LuaContext &lua, RMImGui::ScriptData &c) {
-	try {
-		std::string data(c.script.begin(), c.script.end());
-		lua.executeCode(data);
-		auto eval = lua.readVariable<std::function<float(float)>>("evaluate");
-		float result = eval(2.0);
-		result = eval(2.2);
-		result = eval(0.0);
-		c.eval = eval;
-	}
-	catch (const std::exception& e) {
-		std::cout << e.what() << std::endl;
-	}
-	c.recompile = false;
 }
 
 GLint recompileShader(Shader::ComputeShaderUniforms& uniforms) {
@@ -337,15 +125,13 @@ int main()
 	//
 	//std::cout << shader->code;
 
-	LuaContext lua;
-
 	if (!RMIO::SetupDirectories()) {
 		return -1;
 	}
-	if (setupWindow() == -1) {
+	if (SetupWindow() == -1) {
 		return -1;
 	}
-
+	
 	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
@@ -407,8 +193,10 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, texbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(tex_coords), tex_coords, GL_STATIC_DRAW);
 
-	RMImGui::SetupImGui(window);
+	RMImGui::SetupImGui(GetWindowData().window);
 	ImGui::GetIO().ConfigWindowsMoveFromTitleBarOnly = true;
+
+	CameraData camera;
 
 	double xpos, ypos;
 
@@ -418,40 +206,18 @@ int main()
 	//ArcballCamera camera(eye, center, up);
 	
 	glm::vec2 prev_mouse(-2.f);
-	data.cam_py[0] = camera.Pitch;
-	data.cam_py[1] = camera.Yaw;
+	data.cam_py[0] = camera.camera.Pitch;
+	data.cam_py[1] = camera.camera.Yaw;
 	float power = 0.0;
 	data.shading_mode = &shading_mode;
 	int lastTimelineFrame = data.timeline.frame;
 
 	bool tiling = false;
-	int TILE_WIDTH = screen_width, TILE_HEIGHT = screen_height;
+	int TILE_WIDTH = GetWindowData().screenWidth, TILE_HEIGHT = GetWindowData().screenHeight;
 	int SAMPLES_PER_ITER = 1;
 	int render_sample = 0;
 	int render_tile_x = 0;
 	int render_tile_y = 0;
-
-	glGenTextures(1, &color_out);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, color_out);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screen_width, screen_height, 0, GL_RGBA, GL_FLOAT, NULL);
-
-	glBindImageTexture(0, color_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
-
-	glGenTextures(1, &samples_out);
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, samples_out);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R16UI, screen_width, screen_height, 0, GL_RED_INTEGER, GL_UNSIGNED_SHORT, NULL);
-
-	glBindImageTexture(1, samples_out, 0, GL_FALSE, 0, GL_READ_WRITE, GL_R16UI);
 
 	unsigned int ssbo_prims;
 	glGenBuffers(1, &ssbo_prims);
@@ -511,7 +277,7 @@ int main()
 		else if (data.engine_state == RMImGui::GameEngineState::Engine) {
 			data.timeline.update(deltaTime);
 
-			for (auto& c : data.globals) {
+			/*for (auto& c : data.globals) {
 				if (c.f.mode == AnimatedFloatMode::Code && c.f.script != -1) {
 					if (data.scripts[c.f.script].recompile) {
 						recompile(lua, data.scripts[c.f.script]);
@@ -528,7 +294,7 @@ int main()
 				if (c.recompile) {
 					recompile(lua, c);
 				}
-			}
+			}*/
 
 			/*{
 				float t = glfwGetTime() * .15f;
@@ -538,28 +304,28 @@ int main()
 				data.primitives->values[3] = 0.45 * cos(1.1 + t * 2.5);
 			}*/
 
-			processInput(window);
-			int middle_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
-			glfwGetCursorPos(window, &xpos, &ypos);
+			camera.UpdateMouse(GetWindowData(), deltaTime, data.cam_pos.toVec(), data.cam_py.toVec());
+			int middle_mouse_state = glfwGetMouseButton(GetWindowData().window, GLFW_MOUSE_BUTTON_MIDDLE);
+			glfwGetCursorPos(GetWindowData().window, &xpos, &ypos);
 
 			if (lastTimelineFrame != data.timeline.frame || data.recalculate) {
 				data.animate(data.timeline.frame);
 				data.recalculate = false;
-				moved = true;
+				camera.moved = true;
 			}
-			if (data.reposition_cam && enteredCam) {
-				bool move = update_render_camera();
-				moved |= move;
+			if (data.reposition_cam && camera.enteredCam) {
+				bool move = update_render_camera(camera);
+				camera.moved |= move;
 			}
-			else if (enteredCam) {
-				bool move = update_camera();
-				moved |= move;
+			else if (camera.enteredCam) {
+				//bool move = update_camera();
+				//camera.moved |= move;
 			}
 
-			auto view = camera.GetViewMatrix();
-			bool render_cam = glm::length(camera.Position - data.cam_pos.toVec()) > 0.5;
+			auto view = camera.camera.GetViewMatrix();
+			bool render_cam = glm::length(camera.camera.Position - data.cam_pos.toVec()) > 0.5;
 
-			if (moved || data.rerender) {
+			if (camera.moved || data.rerender) {
 				Shader::SSBOLight lights[COUNT_LIGHTS];
 				for (int i = 0; i < IM_ARRAYSIZE(data.lights.values); i++) {
 					if (!(data.lights[i].type == 1 || data.lights[i].type == 2)) {
@@ -666,12 +432,12 @@ int main()
 			}
 
 			if (*data.shading_mode == ShadingMode::Render) {
-				if (moved || data.rerender)
+				if (camera.moved || data.rerender)
 				{
 					glUseProgram(computeResetCS);
 					glDispatchCompute(
-						ceil((unsigned int)std::min(TILE_WIDTH, screen_width - render_tile_x * TILE_WIDTH) / 8),
-						ceil((unsigned int)std::min(TILE_HEIGHT, screen_height - render_tile_y * TILE_HEIGHT) / 4),
+						ceil((unsigned int)std::min(TILE_WIDTH, GetWindowData().screenWidth - render_tile_x * TILE_WIDTH) / 8),
+						ceil((unsigned int)std::min(TILE_HEIGHT, GetWindowData().screenHeight - render_tile_y * TILE_HEIGHT) / 4),
 						1
 					);
 
@@ -684,8 +450,8 @@ int main()
 				glUseProgram(computeCS);
 
 				glUniformMatrix4fv(computeUniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
-				glUniform3f(computeUniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniform2f(computeUniforms.u_resolution, float(screen_width), float(screen_height));
+				glUniform3f(computeUniforms.camera_pos, camera.camera.Position.x, camera.camera.Position.y, camera.camera.Position.z);
+				glUniform2f(computeUniforms.u_resolution, float(GetWindowData().screenWidth), float(GetWindowData().screenHeight));
 				int prim_count = 0;
 				for (auto p : data.primitives) {
 					if (p.prim_type != 0) {
@@ -706,15 +472,15 @@ int main()
 					Shader::PrepareComputeShader(computeUniforms, data.primCount(), data.groupModifierCount(), render_tile_x * TILE_WIDTH, render_tile_y * TILE_HEIGHT, t, data.samples, SAMPLES_PER_ITER, render_sample, data.cam_data);
 					if (tiling) {
 						glDispatchCompute(
-							ceil((unsigned int)std::min(TILE_WIDTH, screen_width - render_tile_x * TILE_WIDTH) / 8),
-							ceil((unsigned int)std::min(TILE_HEIGHT, screen_height - render_tile_y * TILE_HEIGHT) / 4),
+							ceil((unsigned int)std::min(TILE_WIDTH, GetWindowData().screenWidth - render_tile_x * TILE_WIDTH) / 8),
+							ceil((unsigned int)std::min(TILE_HEIGHT, GetWindowData().screenHeight - render_tile_y * TILE_HEIGHT) / 4),
 							1
 						);
 					}
 					else {
 						glDispatchCompute(
-							ceil((unsigned int)screen_width / 8),
-							ceil((unsigned int)screen_height / 4),
+							ceil((unsigned int)GetWindowData().screenWidth / 8),
+							ceil((unsigned int)GetWindowData().screenHeight / 4),
 							1
 						);
 					}
@@ -723,11 +489,11 @@ int main()
 					glMemoryBarrier(GL_ALL_BARRIER_BITS);
 					if (tiling) {
 						render_tile_x++;
-						if (TILE_WIDTH >= screen_width || render_tile_x * TILE_WIDTH > screen_width) {
+						if (TILE_WIDTH >= GetWindowData().screenWidth || render_tile_x * TILE_WIDTH > GetWindowData().screenWidth) {
 							render_tile_x = 0;
 							render_tile_y++;
 						}
-						if (TILE_HEIGHT >= screen_height || render_tile_y * TILE_HEIGHT > screen_height) {
+						if (TILE_HEIGHT >= GetWindowData().screenHeight || render_tile_y * TILE_HEIGHT > GetWindowData().screenHeight) {
 							render_tile_y = 0;
 							render_sample += SAMPLES_PER_ITER;
 						}
@@ -743,14 +509,14 @@ int main()
 					std::cout << ms << "ms\n";
 				glUseProgram(computeVFShader);
 				Shader::PrepareComputeShaderFragment(computeVFUniforms, render_sample, data.samples);
-				glUniform2f(computeVFUniforms.u_resolution, float(screen_width), float(screen_height));
+				glUniform2f(computeVFUniforms.u_resolution, float(GetWindowData().screenWidth), float(GetWindowData().screenHeight));
 
 			}else{
 				glUseProgram(realtimeVFShader);
 
 				glUniformMatrix4fv(realtimeUniforms.camera_rot, 1, GL_FALSE, &view[0][0]);
-				glUniform3f(realtimeUniforms.camera_pos, camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniform2f(realtimeUniforms.u_resolution, float(screen_width), float(screen_height));
+				glUniform3f(realtimeUniforms.camera_pos, camera.camera.Position.x, camera.camera.Position.y, camera.camera.Position.z);
+				glUniform2f(realtimeUniforms.u_resolution, float(GetWindowData().screenWidth), float(GetWindowData().screenHeight));
 				glUniform1i(realtimeUniforms.shading_mode, shading_mode);
 				glUniform1i(realtimeUniforms.render_cam, render_cam);
 				int prim_count = 0;
@@ -800,15 +566,14 @@ int main()
 
 			data.rerender = false;
 			RMImGui::RenderImGui(data);
-			moved = false;
 			lastTimelineFrame = data.timeline.frame;
 		}
-		glfwSwapBuffers(window);
+		glfwSwapBuffers(GetWindowData().window);
 		Sleep(1);
 		glfwPollEvents();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while (glfwWindowShouldClose(window) == 0);
+	while (glfwWindowShouldClose(GetWindowData().window) == 0);
 
 	/*auto original = Scene::toJson(Scene::createScene(data));
 	auto sceneBack = Scene::convertScene(Scene::toScene(original));
@@ -822,7 +587,6 @@ int main()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-	glViewport(0, 0, screen_width, screen_height);
 	// Cleanup VBO
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
@@ -833,12 +597,7 @@ int main()
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
 
-	try {
-		lua.~LuaContext();
-	}
-	catch (std::exception e) {
 
-	}
 
 	return 0;
 }

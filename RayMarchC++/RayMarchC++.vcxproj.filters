@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\imgui">
-      <UniqueIdentifier>{c6a63985-aa02-4c12-8ae3-59fdfd769196}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\imgui">
-      <UniqueIdentifier>{91715c01-57bf-472a-aa28-d8bc80824d89}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\shaders">
       <UniqueIdentifier>{5a2a816c-8e83-4cdf-86e1-387dece85928}</UniqueIdentifier>
     </Filter>
@@ -31,162 +25,213 @@
     <Filter Include="Source Files\shaders\compiled">
       <UniqueIdentifier>{a90798c4-da1f-4a31-8896-0df16c80e5b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\external">
+      <UniqueIdentifier>{6f069a25-1995-4d7e-a0cb-2d2ec8bd4e47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\external\fglsl">
+      <UniqueIdentifier>{dc9a5168-cbb4-4745-9785-f264362e577c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\external\json">
+      <UniqueIdentifier>{07a49513-43a7-4f9b-a16a-8cbfd8e4f0e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\external\lua">
+      <UniqueIdentifier>{b6b7d589-ce59-44b3-80c5-c6187528fa67}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\external\imgui">
+      <UniqueIdentifier>{91715c01-57bf-472a-aa28-d8bc80824d89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core">
+      <UniqueIdentifier>{44ff4bc2-4f2b-47bf-8ed4-49d992f34483}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gui">
+      <UniqueIdentifier>{b313a4ac-3246-40db-93f2-7485c95936cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\data">
+      <UniqueIdentifier>{c4ad9db8-0886-4cdd-b115-443d5e1d17d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\core\utility">
+      <UniqueIdentifier>{40e231e7-c646-4aae-9509-2746ec430558}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\external">
+      <UniqueIdentifier>{0d05d974-1a47-4888-9720-6cfafc7d247f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\external\imgui">
+      <UniqueIdentifier>{c6a63985-aa02-4c12-8ae3-59fdfd769196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core">
+      <UniqueIdentifier>{d658d12d-851a-44d4-a327-50bda08026e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\data">
+      <UniqueIdentifier>{cd4c5472-bb95-449d-967a-1c5728b9e0d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gui">
+      <UniqueIdentifier>{82c9d244-e4d0-4a7c-9906-fd328507b275}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\core\utility">
+      <UniqueIdentifier>{66e1b041-83cd-4238-a916-d1cf963323d2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="program.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="primitive.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="helpers.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="arcball.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_handler.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="free_cam.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scene.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="RMIO.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="helpers_glm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_animation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_code.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="imgui_stdlib.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_demo.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_draw.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_glfw.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_tables.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_widgets.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\external\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="primitive.cpp">
+      <Filter>Source Files\core\data</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_animation.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_code.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui_handler.cpp">
+      <Filter>Source Files\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="free_cam.cpp">
+      <Filter>Source Files\core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="RMIO.cpp">
+      <Filter>Source Files\core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="helpers.cpp">
+      <Filter>Source Files\core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="helpers_glm.cpp">
+      <Filter>Source Files\core\utility</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
+      <Filter>Source Files\core\data</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>Source Files\core</Filter>
+    </ClCompile>
+    <ClCompile Include="window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scripting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="camera.cpp">
+      <Filter>Source Files\core\utility</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="primitive.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="shader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="arcball.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_handler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="free_cam.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="json.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RMIO.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="animator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="custom_imgui.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="helpers_glm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_animation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_data.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_code.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="imgui_stdlib.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imconfig.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_glfw.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_impl_opengl3_loader.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imgui_internal.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_rectpack.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_textedit.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\..\..\source\repos\imgui\imgui_data\imstb_truetype.h">
-      <Filter>Header Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\LuaContext.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\misc\exception.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\external\imgui</Filter>
     </ClInclude>
     <ClInclude Include="fglsl.h">
+      <Filter>Header Files\external\fglsl</Filter>
+    </ClInclude>
+    <ClInclude Include="json.hpp">
+      <Filter>Header Files\external\json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\LuaContext.hpp">
+      <Filter>Header Files\external\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\..\Documents\GitHub\luawrapper-master\include\misc\exception.hpp">
+      <Filter>Header Files\external\lua</Filter>
+    </ClInclude>
+    <ClInclude Include="custom_imgui.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_animation.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_code.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_data.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui_handler.h">
+      <Filter>Header Files\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="constants.h">
+      <Filter>Header Files\core\data</Filter>
+    </ClInclude>
+    <ClInclude Include="helpers_glm.h">
+      <Filter>Header Files\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="animator.h">
+      <Filter>Header Files\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="free_cam.h">
+      <Filter>Header Files\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="primitive.h">
+      <Filter>Header Files\core\data</Filter>
+    </ClInclude>
+    <ClInclude Include="RMIO.h">
+      <Filter>Header Files\core\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Header Files\core\data</Filter>
+    </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Header Files\core</Filter>
+    </ClInclude>
+    <ClInclude Include="window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scripting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="window_data.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="helpers.h">
-      <Filter>Header Files</Filter>
-    </None>
     <None Include="sdf.shader">
       <Filter>Source Files\shaders\shaders\parts</Filter>
     </None>
@@ -213,6 +258,9 @@
     </None>
     <None Include="cs.compiled.comp">
       <Filter>Source Files\shaders\compiled</Filter>
+    </None>
+    <None Include="helpers.h">
+      <Filter>Header Files\core\utility</Filter>
     </None>
   </ItemGroup>
 </Project>

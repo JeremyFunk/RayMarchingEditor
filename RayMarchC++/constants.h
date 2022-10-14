@@ -8,3 +8,6 @@ const int COUNT_PRIMITIVE = 10;
 const int COUNT_PRIMITIVE_VALUES = 10;
 const int SCRIPT_SIZE = 1020 * 16;
 const int MAX_FILE_LENGTH = 200;
+
+const int DEFAULT_WINDOW_WIDTH = 1920;
+const int DEFAULT_WINDOW_HEIGHT = 1080;

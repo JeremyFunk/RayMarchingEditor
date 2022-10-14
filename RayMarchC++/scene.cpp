@@ -438,7 +438,7 @@ namespace Scene {
         }
 
         for (int i = 0; i < scene.scripts.size(); i++) {
-            RMImGui::ScriptData s = RMImGui::ScriptData(scene.scripts[i].name);
+            ScriptData s = ScriptData(scene.scripts[i].name);
             s.script = scene.scripts[i].script;
             d.scripts.push_back(s);
         }
