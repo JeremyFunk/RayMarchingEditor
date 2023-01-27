@@ -208,6 +208,7 @@
     <None Include="mods.shader" />
     <None Include="reset.comp" />
     <None Include="sdf.shader" />
+    <None Include="shader_manager.cpp" />
     <None Include="vertex.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

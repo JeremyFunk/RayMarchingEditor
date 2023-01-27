@@ -4,7 +4,7 @@
 
 WindowData windowData;
 
-// Framebuffer ids. Needed to resize them when required. It is not needed externally, so not included in WindowData struct.
+
 
 void windowSizeCallback(GLFWwindow* window, int width, int height) 
 {
@@ -33,20 +33,17 @@ void mouseCallback(GLFWwindow* window, double xposIn, double yposIn)
 		windowData.mouseData.lastY = ypos;
 	}
 
-	float xoffset = windowData.mouseData.lastX - xpos;
-	float yoffset = windowData.mouseData.lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-	windowData.mouseData.lastX = xpos;
-	windowData.mouseData.lastY = ypos;
+	windowData.mouseData.xOffset = windowData.mouseData.lastX - xpos;
+	windowData.mouseData.yOffset = windowData.mouseData.lastY - ypos; // reversed since y-coordinates go from bottom to top
 
 	windowData.mouseData.xPos = xpos;
 	windowData.mouseData.yPos = ypos;
 }
 
-//void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-//{
-//	windowData.keyCallbacks.RunCallback(key, action);
-//}
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	windowData.keyStates[key] = action;
+}
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -97,7 +94,7 @@ int SetupWindow() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glfwSetWindowSizeCallback(windowData.window, windowSizeCallback);
 	glfwSetCursorPosCallback(windowData.window, mouseCallback);
-	//glfwSetKeyCallback(windowData.window, keyCallback);
+	glfwSetKeyCallback(windowData.window, keyCallback);
 	glfwSetScrollCallback(windowData.window, scrollCallback);
 	return 0;
 }

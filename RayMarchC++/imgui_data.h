@@ -277,9 +277,12 @@ namespace RMImGui {
         }
     };
 
+    enum class ShadingMode {
+        Light, Normal, Flat, Render
+    };
 
     struct ImGuiData {
-        int* shading_mode;
+        ShadingMode shading_mode;
         int samples = 2;
         Primitive::ShaderPrimitive primitives[COUNT_PRIMITIVE];
         Primitive::ShaderGroupPrimitive groupPrimitives[COUNT_GROUP_MODIFIER];

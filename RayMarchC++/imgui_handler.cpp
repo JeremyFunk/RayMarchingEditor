@@ -621,23 +621,23 @@ namespace RMImGui {
 		if (ImGui::BeginTabItem("Engine")) {
 			{
 				auto selected = "Light Shading";
-				if (*data.shading_mode == 1)
+				if (data.shading_mode == RMImGui::ShadingMode::Normal)
 					selected = "Normal Shading";
-				if (*data.shading_mode == 2)
+				if (data.shading_mode == RMImGui::ShadingMode::Flat)
 					selected = "Flat Shading";
-				if (*data.shading_mode == 3)
+				if (data.shading_mode == RMImGui::ShadingMode::Render)
 					selected = "Render Shading";
 
 				if (ImGui::BeginCombo("##shader", selected)) {
 					if (ImGui::Selectable("Light Shading", true))
-						*data.shading_mode = 0;
+						data.shading_mode = RMImGui::ShadingMode::Light;
 					if (ImGui::Selectable("Normal Shading", false))
-						*data.shading_mode = 1;
+						data.shading_mode = RMImGui::ShadingMode::Normal;
 					if (ImGui::Selectable("Flat Shading", false))
-						*data.shading_mode = 2;
+						data.shading_mode = RMImGui::ShadingMode::Flat;
 					if (ImGui::Selectable("Render Shading", false)) {
 						data.recalculate = true;
-						*data.shading_mode = 3;
+						data.shading_mode = RMImGui::ShadingMode::Render;
 					}
 
 					ImGui::EndCombo();

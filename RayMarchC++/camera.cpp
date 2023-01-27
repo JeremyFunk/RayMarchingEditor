@@ -1,8 +1,9 @@
 #include "free_cam.h"
 #include "window_data.h"
 #include "helpers_glm.h"
+#include <iostream>
 
-enum CameraMode {
+enum class CameraMode {
     Fixed, Free
 };
 
@@ -10,41 +11,39 @@ struct CameraData {
     Camera camera;
     
     // True if the user entered the virtual render camera.
-    bool enteredCam;
+    bool enteredCam = false;
 
     // True if the user is repositioning the camera
-    bool repositionCam;
+    bool repositionCam = false;
 
     // True if the user moved on the last frame;
-    bool moved;
+    bool moved = false;
 
-    CameraMode mode;
+    CameraMode mode = CameraMode::Free;
 
     CameraData() {
         camera = Camera(glm::vec3(0.0, 0.0, 3.0));
-        enteredCam = false;
-        mode = Free;
     }
 
     void UpdateMouse(WindowData& w, float deltaTime, glm::vec3 camPos, glm::vec2 camPY) {
         moved = false;
         bool cMoved = false;
 
-        if (glfwGetKey(w.window, GLFW_KEY_TAB) == GLFW_RELEASE) {
-            if (mode == Fixed) {
-                mode = Free;
+        if (w.keyStates[GLFW_KEY_TAB] == GLFW_RELEASE) {
+            if (mode == CameraMode::Fixed) {
+                mode = CameraMode::Free;
             }
             else {
-                mode = Fixed;
+                mode = CameraMode::Fixed;
             }
         }
-        if (glfwGetKey(w.window, GLFW_KEY_APOSTROPHE) == GLFW_RELEASE) {
+        if (w.keyStates[GLFW_KEY_APOSTROPHE] == GLFW_RELEASE) {
             enteredCam = true;
             cMoved = true;
             update_camera(camPos, camPY);
         }
 
-        if (mode == Free) {
+        if (mode == CameraMode::Free) {
             if (glfwGetKey(w.window, GLFW_KEY_W) == GLFW_PRESS) {
                 camera.ProcessKeyboard(FORWARD, deltaTime);
                 cMoved = true;
@@ -73,9 +72,9 @@ struct CameraData {
             if (w.mouseData.scrollSpeed != 0) {
                 cMoved = true;
             }
+            camera.ProcessMouseMovement(w.mouseData.xOffset, w.mouseData.yOffset);
         }
 
-        camera.ProcessMouseMovement(w.mouseData.xOffset, w.mouseData.yOffset);
         if (w.mouseData.xOffset != 0 || w.mouseData.yOffset != 0 || cMoved) {
             move();
         }
